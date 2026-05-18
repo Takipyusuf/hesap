@@ -1,5 +1,5 @@
-// Firebase yapılandırma bilgileri
-var firebaseConfig = {
+// Projenin aradığı ana büyük harfli yapılandırma değişkeni
+var FIREBASE_CONFIG = {
   apiKey: "AIzaSyCx6Xqxe6qVugVJkjkDiw9QgVln_B-adbU",
   authDomain: "hesaptakip-b9159.firebaseapp.com",
   projectId: "hesaptakip-b9159",
@@ -9,11 +9,15 @@ var firebaseConfig = {
   measurementId: "G-KTWLB9JZ0"
 };
 
-// Ana sayfanın (hesap/:234) inatla aradığı ve kilitlendiği fonksiyon
+// Ne olur ne olmaz, küçük harfli halini de arkada tanımlı bırakalım
+var firebaseConfig = FIREBASE_CONFIG;
+
+// Diğer kilitlenmeyi çözen fonksiyonumuz
 function isFirebaseConfigured() {
-  return firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "";
+  return FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== "";
 }
 
-// Tarayıcının 'import' hatası vermemesi için global alana (window) kesin kayıt yapıyoruz
+// Tüm değişkenleri tarayıcının hafızasına (global window nesnesine) kesin olarak kaydediyoruz
+window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 window.firebaseConfig = firebaseConfig;
 window.isFirebaseConfigured = isFirebaseConfigured;
