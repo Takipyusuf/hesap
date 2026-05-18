@@ -1,0 +1,60 @@
+BURADAN OTOMATİK GÜNCELLEME (Git kurulumu)
+==========================================
+
+Bir kez kurarsın; sonra her değişiklikte tek komut veya çift tık yeter.
+
+────────────────────────────────────────
+SEÇENEK A — GitHub Desktop (EN KOLAY)
+────────────────────────────────────────
+1. İndir: https://desktop.github.com
+2. Kur, GitHub hesabınla giriş yap (Takipyusuf)
+3. File → Add local repository
+4. Klasör seç: C:\Users\Yusuf\Desktop\hesap
+5. "Create a repository" veya mevcut repoya bağla:
+   - Publish repository → isim: hesap → Public
+
+Her güncelleme:
+  - Cursor'da dosyayı kaydet
+  - GitHub Desktop'u aç
+  - Sol altta değişiklikleri gör → Summary yaz → "Commit to main"
+  - Üstte "Push origin" (veya Fetch/Push)
+  - 1-2 dk sonra site güncellenir: https://takipyusuf.github.io/hesap/
+
+────────────────────────────────────────
+SEÇENEK B — Git komut satırı
+────────────────────────────────────────
+1. Git kur: https://git-scm.com/download/win
+   (Varsayılan ayarlarla İleri → Kur)
+
+2. Cursor'da Terminal aç (hesap klasöründe) ve SADECE BİR KEZ:
+
+   git init
+   git add .
+   git commit -m "Ilk commit"
+   git branch -M main
+   git remote add origin https://github.com/Takipyusuf/hesap.git
+   git pull origin main --allow-unrelated-histories
+   git push -u origin main
+
+   (pull hata verirse: önce GitHub'daki dosyalarla eşleşmiş olursunuz)
+
+3. Her değişiklikten sonra:
+   - gonder.bat dosyasına çift tık
+   VEYA terminalde:
+   git add .
+   git commit -m "guncelleme"
+   git push
+
+────────────────────────────────────────
+NE ZAMAN CANLI SİTE GÜNCELLENİR?
+────────────────────────────────────────
+  Bilgisayarda kaydet → GitHub'a push → 1-2 dakika → Pages yenilenir
+
+  Push yapmadan sadece Cursor'da kaydetmek YETMEZ.
+
+────────────────────────────────────────
+SORUN GİDERME
+────────────────────────────────────────
+  "git tanınmıyor" → Git'i kur, bilgisayarı yeniden başlat
+  "rejected" → önce: git pull origin main --rebase  sonra: git push
+  Site eski görünüyor → tarayıcıda Ctrl+F5 (önbellek temizle)
