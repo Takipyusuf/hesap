@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borç Takip — Yönetici</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="setup-banner" class="setup-banner" style="display:none;">
+        Firebase ayarlanmadı. <strong>firebase-config.js</strong> dosyasını doldurun.
+    </div>
+
+    <div id="admin-auth" class="screen">
+        <div class="auth-box">
+            <h2><i class="fa-solid fa-user-shield" style="color:var(--admin);"></i> Yönetici Paneli</h2>
+            <p class="sub">Tüm kullanıcıları ve işlemleri buradan izleyebilirsiniz</p>
+            <form id="admin-login-form">
+                <div class="form-field">
+                    <label>Yönetici e-postası</label>
+                    <input type="email" id="admin-email" required placeholder="firebase-config.js'deki ADMIN_EMAIL">
+                </div>
+                <div class="form-field">
+                    <label>Şifre</label>
+                    <input type="password" id="admin-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:var(--admin);">Giriş</button>
+            </form>
+            <p id="admin-error" class="msg-error"></p>
+            <div class="auth-footer" style="margin-top:16px;">
+                <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Kullanıcı sayfası</a>
+            </div>
+            <p style="margin-top:16px;font-size:0.75rem;color:var(--text-muted);">
+                İlk kez: <a href="index.html">kullanıcı sayfasından</a> yönetici e-postası ile kayıt olun.
+            </p>
+        </div>
+    </div>
+
+    <main class="app admin-layout" id="admin-app">
+        <header>
+            <div>
+                <h1><i class="fa-solid fa-eye" style="color:var(--admin);"></i> Yönetim Merkezi</h1>
+                <p class="user-badge" id="admin-email-display"></p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-ghost btn-sm" id="refresh-btn"><i class="fa-solid fa-rotate"></i> Yenile</button>
+                <button class="btn btn-danger btn-sm" id="admin-logout-btn"><i class="fa-solid fa-power-off"></i> Çıkış</button>
+            </div>
+        </header>
+
+        <div class="summary-grid">
+            <div class="stat-card count">
+                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <div class="stat-label">Kayıtlı Kullanıcı</div>
+                    <div class="stat-value" id="admin-total-users">0</div>
+                </div>
+            </div>
+            <div class="stat-card debt">
+                <div class="stat-icon"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                <div>
+                    <div class="stat-label">Sistem Toplam Kalan</div>
+                    <div class="stat-value" id="admin-total-debt">0,00 ₺</div>
+                </div>
+            </div>
+            <div class="stat-card paid">
+                <div class="stat-icon"><i class="fa-solid fa-list"></i></div>
+                <div>
+                    <div class="stat-label">Toplam Hesap</div>
+                    <div class="stat-value" id="admin-total-accounts">0</div>
+                </div>
+            </div>
+        </div>
+
+        <p id="admin-loading" class="loading" style="display:none;">Yükleniyor...</p>
+
+        <div class="admin-grid">
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-users"></i> Kullanıcılar</h2>
+                <div id="user-list" class="user-list"></div>
+            </div>
+
+            <div>
+                <div class="section" id="user-detail">
+                    <h2 class="section-title"><i class="fa-solid fa-user"></i> <span id="detail-title">Kullanıcı seçin</span></h2>
+                    <p id="detail-email" style="color:var(--text-muted);margin-bottom:16px;font-size:0.9rem;"></p>
+
+                    <h3 style="font-size:0.9rem;margin-bottom:8px;color:var(--text-muted);">BORÇLAR</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Banka</th><th>İlk</th><th>Faiz</th><th>Taksit</th><th>Kalan</th></tr></thead>
+                            <tbody id="detail-debts"></tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size:0.9rem;margin:20px 0 8px;color:var(--text-muted);">ÖDEMELER</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Banka</th><th>Tarih</th><th>Tutar</th></tr></thead>
+                            <tbody id="detail-payments"></tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size:0.9rem;margin:20px 0 8px;color:var(--text-muted);">BU KULLANICININ İŞLEMLERİ</h3>
+                    <div id="detail-activity" class="activity-feed"></div>
+                </div>
+
+                <div class="section" style="margin-top:20px;">
+                    <h2 class="section-title"><i class="fa-solid fa-bolt"></i> Canlı Aktivite (Tümü)</h2>
+                    <div id="global-activity" class="activity-feed"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app-core.js"></script>
+    <script src="admin-app.js"></script>
+    <script>
+        if (!isFirebaseConfigured()) {
+            document.getElementById('setup-banner').style.display = 'block';
+        } else {
+            initFirebase();
+            initAdminApp();
+        }
+    </script>
+</body>
+</html>

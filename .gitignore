@@ -1,0 +1,14 @@
+# Gizli / yerel
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+
+# Editör
+.vscode/
+.idea/
+
+# İsteğe bağlı: gerçek Firebase anahtarlarını repoya koymak istemezseniz
+# (Web anahtarları kurallarla korunur; çoğu proje firebase-config.js'i commit eder)
+# firebase-config.js

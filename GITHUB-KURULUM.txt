@@ -1,0 +1,94 @@
+GITHUB'A YÜKLEME — ADIM ADIM (GARANTİ YÖNTEM)
+==============================================
+
+GitHub Pages ile siteniz kalıcı olur:
+https://KULLANICI.github.io/hesap/
+
+────────────────────────────────────────
+A) GITHUB HESABI
+────────────────────────────────────────
+1. https://github.com → Sign up (ücretsiz)
+2. E-postanı doğrula
+
+────────────────────────────────────────
+B) YENİ REPO OLUŞTUR
+────────────────────────────────────────
+1. Sağ üst + → New repository
+2. Repository name: hesap  (veya istediğin isim)
+3. Public seç
+4. "Add a README" İŞARETLEME
+5. Create repository
+
+────────────────────────────────────────
+C) DOSYALARI YÜKLE (Git programı gerekmez)
+────────────────────────────────────────
+1. Oluşan boş repoda: "uploading an existing file" linkine tıkla
+   VEYA: Add file → Upload files
+
+2. Şu dosyaların HEPSİNİ sürükle (hesap klasöründen):
+   - index.html
+   - admin.html
+   - styles.css
+   - firebase-config.js
+   - firebase-config.example.js
+   - app-core.js
+   - user-app.js
+   - admin-app.js
+   - firestore.rules
+   - README.md
+   - KURULUM.txt
+   - GITHUB-KURULUM.txt
+   - .gitignore
+
+3. Commit message: Ilk yukleme
+4. Commit changes
+
+────────────────────────────────────────
+D) GITHUB PAGES AÇ
+────────────────────────────────────────
+1. Repo → Settings (üst menü)
+2. Sol menü → Pages
+3. Build and deployment:
+   - Source: Deploy from a branch
+   - Branch: main
+   - Folder: / (root)
+4. Save
+
+5. 1-3 dakika bekle. Üstte yeşil link çıkar:
+   https://SENIN-KULLANICI-ADIN.github.io/hesap/
+
+────────────────────────────────────────
+E) FIREBASE AYARI (ÖNEMLİ — yoksa giriş çalışmaz)
+────────────────────────────────────────
+1. Firebase Console → Authentication → Settings
+2. Authorized domains → Add domain
+3. Ekle: SENIN-KULLANICI-ADIN.github.io
+
+────────────────────────────────────────
+F) KULLANIM
+────────────────────────────────────────
+Kullanıcılar:  https://....github.io/hesap/
+              veya https://....github.io/hesap/index.html
+
+Yönetici:     https://....github.io/hesap/admin.html
+
+────────────────────────────────────────
+G) GÜNCELLEME YAPINCA
+────────────────────────────────────────
+Değişen dosyayı GitHub'da aç → kalem (Edit) → yapıştır → Commit
+VEYA tekrar Upload files ile üzerine yaz.
+
+────────────────────────────────────────
+İSTEĞE BAĞLI: Git programı ile (ileride)
+────────────────────────────────────────
+1. https://git-scm.com/download/win kur
+2. Bilgisayarda hesap klasöründe:
+
+   git init
+   git add .
+   git commit -m "Ilk commit"
+   git branch -M main
+   git remote add origin https://github.com/KULLANICI/hesap.git
+   git push -u origin main
+
+Sonraki güncellemeler: git add . → git commit -m "mesaj" → git push

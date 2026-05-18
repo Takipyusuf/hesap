@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borç Takip — Kullanıcı</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="setup-banner" class="setup-banner" style="display:none;">
+        Firebase ayarlanmadı. <strong>firebase-config.js</strong> dosyasındaki bilgileri doldurun.
+    </div>
+
+    <!-- KAYIT / GİRİŞ -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-box">
+            <h2><i class="fa-solid fa-wallet"></i> Borç Takip</h2>
+            <p class="sub">Hesabını oluştur, borçlarını güvenle takip et</p>
+
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" data-form="form-login">Giriş Yap</button>
+                <button type="button" class="auth-tab" data-form="form-register">Kayıt Ol</button>
+            </div>
+
+            <form id="form-login" class="auth-form active">
+                <div class="form-field">
+                    <label>E-posta</label>
+                    <input type="email" id="login-email" required placeholder="ornek@email.com">
+                </div>
+                <div class="form-field">
+                    <label>Şifre</label>
+                    <input type="password" id="login-password" required placeholder="••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">Giriş Yap</button>
+            </form>
+
+            <form id="form-register" class="auth-form">
+                <div class="form-field">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="reg-name" required placeholder="Adınız">
+                </div>
+                <div class="form-field">
+                    <label>E-posta</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                <div class="form-field">
+                    <label>Şifre (min. 6 karakter)</label>
+                    <input type="password" id="reg-password" required minlength="6">
+                </div>
+                <div class="form-field">
+                    <label>Şifre Tekrar</label>
+                    <input type="password" id="reg-password2" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Hesap Oluştur</button>
+            </form>
+
+            <p id="auth-error" class="msg-error"></p>
+
+            <div class="auth-footer">
+                <a href="admin.html"><i class="fa-solid fa-user-shield"></i> Yönetici paneli</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- UYGULAMA -->
+    <main class="app" id="app">
+        <header>
+            <div>
+                <h1><i class="fa-solid fa-chart-line"></i> Borçlarım</h1>
+                <p class="user-badge">Hoş geldin, <strong id="user-display-name"></strong></p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-danger btn-sm" id="logout-btn"><i class="fa-solid fa-power-off"></i> Çıkış</button>
+            </div>
+        </header>
+
+        <div class="info-box">
+            Verilerin bulutta güvenle saklanır. Her cihazdan aynı hesapla giriş yapabilirsin.
+        </div>
+
+        <div class="summary-grid">
+            <div class="stat-card debt">
+                <div class="stat-icon"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                <div>
+                    <div class="stat-label">Toplam Kalan Borç</div>
+                    <div class="stat-value" id="total-remaining">0,00 ₺</div>
+                    <div class="stat-sub" id="total-paid-sub">Ödenen: 0,00 ₺</div>
+                </div>
+            </div>
+            <div class="stat-card month">
+                <div class="stat-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                <div>
+                    <div class="stat-label">Bu Ay Ödenen</div>
+                    <div class="stat-value" id="month-paid">0,00 ₺</div>
+                    <div class="stat-sub" id="month-label"></div>
+                </div>
+            </div>
+            <div class="stat-card paid">
+                <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <div>
+                    <div class="stat-label">Aylık Taksit Planı</div>
+                    <div class="stat-value" id="monthly-plan">0,00 ₺</div>
+                    <div class="stat-sub">Aktif hesaplar</div>
+                </div>
+            </div>
+            <div class="stat-card count">
+                <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div>
+                    <div class="stat-label">Hesap Sayısı</div>
+                    <div class="stat-value" id="account-count">0</div>
+                    <div class="stat-sub" id="credit-other-split"></div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="kredi">Kredi Hesapları</button>
+            <button class="tab" data-tab="diger">Diğer Bankalar</button>
+            <button class="tab" data-tab="gecmis">Ödeme Geçmişi</button>
+            <button class="tab" data-tab="ayarlar">Hesabım</button>
+        </nav>
+
+        <section class="panel active" id="panel-kredi">
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-plus-circle"></i> Yeni Kredi</h2>
+                <form id="form-kredi">
+                    <div class="form-grid">
+                        <label>Banka<input type="text" name="bankName" required></label>
+                        <label>Ana Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
+                        <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
+                        <label>Aylık Taksit<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
+                        <label>Faiz %<input type="number" name="interestRate" step="0.01" min="0" value="0"></label>
+                        <label>Taksit Sayısı<input type="number" name="totalInstallments" min="1" placeholder="Opsiyonel"></label>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Kaydet</button>
+                </form>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-list"></i> Kredi Listesi</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Banka</th><th>İlk Borç</th><th>Faiz</th><th>Taksit</th><th>Kalan</th><th>İlerleme</th><th></th></tr></thead>
+                        <tbody id="table-kredi"></tbody>
+                    </table>
+                </div>
+                <div id="empty-kredi" class="empty-state" style="display:none;"><i class="fa-solid fa-inbox"></i><p>Henüz kredi yok.</p></div>
+            </div>
+        </section>
+
+        <section class="panel" id="panel-diger">
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-plus-circle"></i> Diğer Banka / Kart</h2>
+                <form id="form-diger">
+                    <div class="form-grid">
+                        <label>Banka<input type="text" name="bankName" required></label>
+                        <label>Toplam Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
+                        <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
+                        <label>Aylık Ödeme<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
+                        <label>Faiz %<input type="number" name="interestRate" step="0.01" min="0" value="0"></label>
+                        <label>Ödenen (ops.)<input type="number" name="paidSoFar" step="0.01" min="0" value="0"></label>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Kaydet</button>
+                </form>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-list"></i> Diğer Hesaplar</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Banka</th><th>İlk</th><th>Ödenen</th><th>Faiz</th><th>Aylık</th><th>Kalan</th><th></th></tr></thead>
+                        <tbody id="table-diger"></tbody>
+                    </table>
+                </div>
+                <div id="empty-diger" class="empty-state" style="display:none;"><i class="fa-solid fa-inbox"></i><p>Henüz hesap yok.</p></div>
+            </div>
+        </section>
+
+        <section class="panel" id="panel-gecmis">
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Aylık Özet</h2>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.85rem;color:var(--text-muted);">Ay: </label>
+                    <input type="month" id="history-month">
+                </div>
+                <p style="margin-bottom:12px;font-size:0.9rem;">Toplam: <strong id="selected-month-total" style="color:var(--success);">0,00 ₺</strong></p>
+                <div id="history-list" class="history-list"></div>
+                <div id="empty-history" class="empty-state" style="display:none;"><i class="fa-solid fa-receipt"></i><p>Kayıt yok.</p></div>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-chart-bar"></i> Son 6 Ay</h2>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Ay</th><th>Ödenen</th><th>Adet</th></tr></thead>
+                    <tbody id="monthly-summary-table"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="panel-ayarlar">
+            <div class="section">
+                <h2 class="section-title"><i class="fa-solid fa-key"></i> Şifre Değiştir</h2>
+                <input type="password" id="old-password" placeholder="Mevcut şifre">
+                <input type="password" id="new-password" placeholder="Yeni şifre">
+                <input type="password" id="new-password-confirm" placeholder="Yeni şifre tekrar">
+                <button class="btn btn-primary" id="change-password-btn" style="margin-top:8px;">Güncelle</button>
+                <p id="password-msg" class="msg-success"></p>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-money-bill-wave"></i> Taksit Öde</h3>
+            <p id="payment-modal-bank" style="color:var(--text-muted);margin-bottom:12px;font-size:0.9rem;"></p>
+            <label style="font-size:0.8rem;color:var(--text-muted);">Tutar (₺)</label>
+            <input type="number" id="payment-amount" step="0.01" min="0.01">
+            <label style="font-size:0.8rem;color:var(--text-muted);margin-top:12px;display:block;">Tarih</label>
+            <input type="date" id="payment-date">
+            <div class="modal-actions">
+                <button class="btn btn-ghost" id="payment-cancel">İptal</button>
+                <button class="btn btn-success" id="payment-confirm">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app-core.js"></script>
+    <script src="user-app.js"></script>
+    <script>
+        if (!isFirebaseConfigured()) {
+            document.getElementById('setup-banner').style.display = 'block';
+        } else {
+            initFirebase();
+            initUserApp();
+        }
+    </script>
+</body>
+</html>
