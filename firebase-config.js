@@ -12,9 +12,9 @@ var FIREBASE_CONFIG = {
 // Ne olur ne olmaz, küçük harfli halini de arkada tanımlı bırakalım
 var firebaseConfig = FIREBASE_CONFIG;
 
-// Diğer kilitlenmeyi çözen fonksiyonumuz
 function isFirebaseConfigured() {
-  return FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== "";
+  var config = window.FIREBASE_CONFIG || (typeof FIREBASE_CONFIG !== 'undefined' ? FIREBASE_CONFIG : null) || window.firebaseConfig;
+  return config && config.apiKey && config.apiKey !== "";
 }
 
 // Tüm değişkenleri tarayıcının hafızasına (global window nesnesine) kesin olarak kaydediyoruz
