@@ -1,4 +1,5 @@
-const firebaseConfig = {
+// Firebase yapılandırma bilgileri
+var firebaseConfig = {
   apiKey: "AIzaSyCx6Xqxe6qVugVJkjkDiw9QgVln_B-adbU",
   authDomain: "hesaptakip-b9159.firebaseapp.com",
   projectId: "hesaptakip-b9159",
@@ -8,11 +9,11 @@ const firebaseConfig = {
   measurementId: "G-KTWLB9JZ0"
 };
 
-// Sitenin kilitlenmesini engelleyen ve üstteki sarı şeridi kapatan fonksiyon
+// Ana sayfanın (hesap/:234) inatla aradığı ve kilitlendiği fonksiyon
 function isFirebaseConfigured() {
   return firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "";
 }
 
-// Firebase bileşenlerini pencere (global) seviyesine taşıyalım ki diğer dosyalar rahatça okusun
+// Tarayıcının 'import' hatası vermemesi için global alana (window) kesin kayıt yapıyoruz
 window.firebaseConfig = firebaseConfig;
 window.isFirebaseConfigured = isFirebaseConfigured;
