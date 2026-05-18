@@ -1,7 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyCx6Xqxe6qVugVJkjkDiw9QgVln_B-adbU",
   authDomain: "hesaptakip-b9159.firebaseapp.com",
@@ -12,10 +8,11 @@ const firebaseConfig = {
   measurementId: "G-KTWLB9JZ0"
 };
 
-// Firebase'i başlat
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Sitenin kilitlenmesini engelleyen ve üstteki sarı şeridi kapatan fonksiyon
+function isFirebaseConfigured() {
+  return firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "";
+}
 
-// Diğer dosyaların bu bağlantıları kullanabilmesi için dışa aktar
-export { app, auth, db };
+// Firebase bileşenlerini pencere (global) seviyesine taşıyalım ki diğer dosyalar rahatça okusun
+window.firebaseConfig = firebaseConfig;
+window.isFirebaseConfigured = isFirebaseConfigured;
