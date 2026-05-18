@@ -1,9 +1,11 @@
 let db, auth, firebaseReady = false;
 
 function initFirebase() {
-    if (!isFirebaseConfigured()) return false;
+    var config = window.FIREBASE_CONFIG || (typeof FIREBASE_CONFIG !== 'undefined' ? FIREBASE_CONFIG : null) || window.firebaseConfig;
+    if (!config || !config.apiKey) return false;
+    
     if (!firebase.apps.length) {
-        firebase.initializeApp(FIREBASE_CONFIG);
+        firebase.initializeApp(config);
     }
     auth = firebase.auth();
     db = firebase.firestore();
