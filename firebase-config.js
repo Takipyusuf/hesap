@@ -9,11 +9,22 @@ var FIREBASE_CONFIG = {
   measurementId: "G-KTWLKB9JZ0"
 };
 
+// Antigravity AI (Google Gemini) Yapılandırma Değişkeni
+var ANTIGRAVITY_CONFIG = {
+  apiKey: "AIzaSyDPvBn1_0Zk0urb1CadhsiN5RzOILblcGM"
+};
+
 // Ne olur ne olmaz, küçük harfli halini de arkada tanımlı bırakalım
 var firebaseConfig = FIREBASE_CONFIG;
+var antigravityConfig = ANTIGRAVITY_CONFIG;
 
 function isFirebaseConfigured() {
   var config = window.FIREBASE_CONFIG || (typeof FIREBASE_CONFIG !== 'undefined' ? FIREBASE_CONFIG : null) || window.firebaseConfig;
+  return config && config.apiKey && config.apiKey !== "";
+}
+
+function isAntigravityConfigured() {
+  var config = window.ANTIGRAVITY_CONFIG || (typeof ANTIGRAVITY_CONFIG !== 'undefined' ? ANTIGRAVITY_CONFIG : null) || window.antigravityConfig;
   return config && config.apiKey && config.apiKey !== "";
 }
 
@@ -21,3 +32,8 @@ function isFirebaseConfigured() {
 window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 window.firebaseConfig = firebaseConfig;
 window.isFirebaseConfigured = isFirebaseConfigured;
+
+// Antigravity AI değişkenlerini de global window nesnesine kaydediyoruz
+window.ANTIGRAVITY_CONFIG = ANTIGRAVITY_CONFIG;
+window.antigravityConfig = antigravityConfig;
+window.isAntigravityConfigured = isAntigravityConfigured;
