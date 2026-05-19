@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="styles.css?v=1.3">
 </head>
 <body>
 
@@ -176,13 +176,31 @@
                 <h2 class="section-title"><i class="fa-solid fa-plus-circle"></i> Yeni Kredi</h2>
                 <form id="form-kredi">
                     <div class="form-grid">
-                        <label>Banka<input type="text" name="bankName" required></label>
-                        <label>Ödeme Günü (1-31)<input type="number" name="paymentDay" min="1" max="31" required placeholder="Örn: 15"></label>
-                        <label>Ana Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
-                        <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
-                        <label>Aylık Taksit<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
-                        <label>Faiz %<input type="number" name="interestRate" step="0.01" min="0" value="0"></label>
-                        <label>Taksit Sayısı<input type="number" name="totalInstallments" min="1" placeholder="Opsiyonel"></label>
+                        <label>Banka
+                            <select name="bankName" required>
+                                <option value="" disabled selected>Banka seçin</option>
+                                <option value="Ziraat Bankası">Ziraat Bankası</option>
+                                <option value="VakıfBank">VakıfBank</option>
+                                <option value="Halkbank">Halkbank</option>
+                                <option value="İş Bankası">Türkiye İş Bankası</option>
+                                <option value="Garanti BBVA">Garanti BBVA</option>
+                                <option value="Yapı Kredi">Yapı Kredi</option>
+                                <option value="Akbank">Akbank</option>
+                                <option value="QNB Finansbank">QNB Finansbank</option>
+                                <option value="DenizBank">DenizBank</option>
+                                <option value="TEB">TEB</option>
+                                <option value="Kuveyt Türk">Kuveyt Türk</option>
+                                <option value="ING Bank">ING Bank</option>
+                                <option value="Türkiye Finans">Türkiye Finans</option>
+                                <option value="Papara">Papara</option>
+                                <option value="Diğer Banka">Diğer Banka / Kurum</option>
+                            </select>
+                        </label>
+                        <label>Taksit Ödeme Günü (1-31)<input type="number" name="paymentDay" min="1" max="31" required placeholder="Örn: 15"></label>
+                        <label>Aylık Taksit Tutarı (₺)<input type="number" name="installmentAmount" step="0.01" min="0.01" required placeholder="Aylık ödeme tutarı"></label>
+                        <label>Toplam Taksit Sayısı (Ay)<input type="number" name="totalInstallments" min="1" required placeholder="Örn: 12, 24"></label>
+                        <label>Ödenen Taksit Sayısı<input type="number" name="paidInstallments" min="0" value="0" placeholder="Ödenen ay sayısı"></label>
+                        <label>Faiz Oranı (%)<input type="number" name="interestRate" step="0.01" min="0" value="0" placeholder="Opsiyonel"></label>
                     </div>
                     <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Kaydet</button>
                 </form>
@@ -204,13 +222,31 @@
                 <h2 class="section-title"><i class="fa-solid fa-plus-circle"></i> Diğer Banka / Kart</h2>
                 <form id="form-diger">
                     <div class="form-grid">
-                        <label>Banka<input type="text" name="bankName" required></label>
+                        <label>Banka
+                            <select name="bankName" required>
+                                <option value="" disabled selected>Banka seçin</option>
+                                <option value="Ziraat Bankası">Ziraat Bankası</option>
+                                <option value="VakıfBank">VakıfBank</option>
+                                <option value="Halkbank">Halkbank</option>
+                                <option value="İş Bankası">Türkiye İş Bankası</option>
+                                <option value="Garanti BBVA">Garanti BBVA</option>
+                                <option value="Yapı Kredi">Yapı Kredi</option>
+                                <option value="Akbank">Akbank</option>
+                                <option value="QNB Finansbank">QNB Finansbank</option>
+                                <option value="DenizBank">DenizBank</option>
+                                <option value="TEB">TEB</option>
+                                <option value="Kuveyt Türk">Kuveyt Türk</option>
+                                <option value="ING Bank">ING Bank</option>
+                                <option value="Türkiye Finans">Türkiye Finans</option>
+                                <option value="Papara">Papara</option>
+                                <option value="Diğer Banka">Diğer Banka / Kurum</option>
+                            </select>
+                        </label>
                         <label>Ödeme Günü (1-31)<input type="number" name="paymentDay" min="1" max="31" required placeholder="Örn: 15"></label>
-                        <label>Toplam Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
-                        <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
-                        <label>Aylık Ödeme<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
-                        <label>Faiz %<input type="number" name="interestRate" step="0.01" min="0" value="0"></label>
-                        <label>Ödenen (ops.)<input type="number" name="paidSoFar" step="0.01" min="0" value="0"></label>
+                        <label>Toplam Borç (₺)<input type="number" name="totalAmount" step="0.01" min="0" required placeholder="Toplam borç tutarı"></label>
+                        <label>Kalan Borç (₺)<input type="number" name="remainingAmount" step="0.01" min="0" required placeholder="Kalan borç tutarı"></label>
+                        <label>Aylık Ödeme Tutarı (₺)<input type="number" name="installmentAmount" step="0.01" min="0.01" required placeholder="Aylık ödeme tutarı"></label>
+                        <label>Faiz Oranı (%)<input type="number" name="interestRate" step="0.01" min="0" value="0" placeholder="Opsiyonel"></label>
                     </div>
                     <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Kaydet</button>
                 </form>
