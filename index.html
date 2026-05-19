@@ -15,7 +15,6 @@
         Firebase ayarlanmadı. <strong>firebase-config.js</strong> dosyasındaki bilgileri doldurun.
     </div>
 
-    <!-- KAYIT / GİRİŞ -->
     <div id="auth-screen" class="screen">
         <div class="auth-box">
             <h2><i class="fa-solid fa-wallet"></i> Borç Takip</h2>
@@ -66,7 +65,6 @@
         </div>
     </div>
 
-    <!-- UYGULAMA -->
     <main class="app" id="app">
         <header>
             <div>
@@ -200,7 +198,7 @@
 
         <section class="panel" id="panel-ayarlar">
             <div class="section">
-                <h2 class="section-title"><i class="fa-solid fa-key"></i> Şifre Değiştir</h2>
+                <h2 class="section-title"><i class="fa-solid fa-user-gear"></i> Şifre Değiştir</h2>
                 <input type="password" id="old-password" placeholder="Mevcut şifre">
                 <input type="password" id="new-password" placeholder="Yeni şifre">
                 <input type="password" id="new-password-confirm" placeholder="Yeni şifre tekrar">
@@ -223,6 +221,23 @@
                 <button class="btn btn-success" id="payment-confirm">Kaydet</button>
             </div>
         </div>
+    </div>
+
+    <div id="ai-widget-container">
+        <div id="ai-chat-window">
+            <div id="ai-chat-header">
+                <span>🚀 Antigravity AI</span>
+                <button onclick="toggleAIChat()" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:16px;">✕</button>
+            </div>
+            <div id="ai-chat-body">
+                <div class="ai-msg bot">Merhaba! Ben Antigravity. Borç takip uygulamanız hakkında veya merak ettiğiniz herhangi bir konuda yardımcı olabilirim.</div>
+            </div>
+            <div id="ai-chat-footer">
+                <input type="text" id="ai-chat-input" placeholder="Bir şey sorun...">
+                <button id="ai-chat-send">➤</button>
+            </div>
+        </div>
+        <button id="ai-chat-button" class="floating-ai" onclick="toggleAIChat()">🤖</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
