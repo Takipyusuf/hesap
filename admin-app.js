@@ -1,16 +1,13 @@
 // ==========================================
 // ADMIN YAPILANDIRMASI & SABİTLER
 // ==========================================
-// NOT: Eğer window.FIREBASE_CONFIG içinde adminEmail tanımladıysanız oradan alır, 
-// yoksa aşağıdaki tırnak içine kendi belirleyeceğiniz admin e-postasını yazın!
-const ADMIN_EMAIL = window.ADMIN_EMAIL || (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.adminEmail) || "admin@email.com";
+const ADMIN_EMAIL = "adminyusuf@gmail.com";
 
 let adminUser = null;
 let allUsers = [];
 let selectedUserId = null;
 
 function showAdminAuth() {
-    // DOM güvenliği için element kontrolü
     const authEl = document.getElementById('admin-auth');
     const appEl = document.getElementById('admin-app');
     if (authEl) authEl.style.display = 'flex';
@@ -77,10 +74,9 @@ async function adminLogout() {
 
 async function loadAdminDashboard() {
     const loadingEl = document.getElementById('admin-loading');
-    if (loadingEl) loadingEl.style.style.display = 'block';
+    if (loadingEl) loadingEl.style.display = 'block';
 
     try {
-        // Tüm koleksiyonları eşzamanlı olarak çekiyoruz
         const [usersSnap, debtsSnap, activitySnap] = await Promise.all([
             db.collection('users').get(),
             db.collection('debts').get(),
@@ -95,7 +91,6 @@ async function loadAdminDashboard() {
         let totalRemaining = 0;
         allDebts.forEach(d => { totalRemaining += d.remainingAmount || 0; });
 
-        // Arayüz sayaçlarını güncelle
         const totalUsersEl = document.getElementById('admin-total-users');
         const totalDebtEl = document.getElementById('admin-total-debt');
         const totalAccountsEl = document.getElementById('admin-total-accounts');
@@ -253,5 +248,4 @@ function initAdminApp() {
     }
 }
 
-// Firebase hazır olduğunda tetiklenmesi için global kaydetme
 window.initAdminApp = initAdminApp;
