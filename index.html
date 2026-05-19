@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=1.2">
 </head>
 <body>
 
@@ -28,11 +28,17 @@
             <form id="form-login" class="auth-form active">
                 <div class="form-field">
                     <label>E-posta</label>
-                    <input type="email" id="login-email" required placeholder="ornek@email.com">
+                    <div class="input-icon-wrapper">
+                        <i class="fa-regular fa-envelope input-icon"></i>
+                        <input type="email" id="login-email" required placeholder="ornek@email.com">
+                    </div>
                 </div>
                 <div class="form-field">
                     <label>Şifre</label>
-                    <input type="password" id="login-password" required placeholder="••••••">
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="login-password" required placeholder="••••••">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Giriş Yap</button>
             </form>
@@ -40,19 +46,31 @@
             <form id="form-register" class="auth-form">
                 <div class="form-field">
                     <label>Ad Soyad</label>
-                    <input type="text" id="reg-name" required placeholder="Adınız">
+                    <div class="input-icon-wrapper">
+                        <i class="fa-regular fa-user input-icon"></i>
+                        <input type="text" id="reg-name" required placeholder="Adınız">
+                    </div>
                 </div>
                 <div class="form-field">
                     <label>E-posta</label>
-                    <input type="email" id="reg-email" required>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-regular fa-envelope input-icon"></i>
+                        <input type="email" id="reg-email" required placeholder="ornek@email.com">
+                    </div>
                 </div>
                 <div class="form-field">
                     <label>Şifre (min. 6 karakter)</label>
-                    <input type="password" id="reg-password" required minlength="6">
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="reg-password" required minlength="6" placeholder="••••••">
+                    </div>
                 </div>
                 <div class="form-field">
                     <label>Şifre Tekrar</label>
-                    <input type="password" id="reg-password2" required>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="reg-password2" required placeholder="••••••">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Hesap Oluştur</button>
             </form>
@@ -115,6 +133,37 @@
             </div>
         </div>
 
+        <!-- Maaş & Aylık Bütçe Planlayıcı Section -->
+        <div class="section budget-planner-section">
+            <h2 class="section-title"><i class="fa-solid fa-calculator"></i> Maaş & Aylık Bütçe Planlayıcı</h2>
+            <div class="budget-grid">
+                <div class="budget-input-card">
+                    <label>Aylık Net Maaşınız (₺)</label>
+                    <div class="budget-input-group">
+                        <input type="number" id="salary-input" min="0" step="0.01" placeholder="Maaşınızı girin">
+                        <button class="btn btn-primary" id="save-salary-btn"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                    </div>
+                </div>
+                <div class="budget-stats-card">
+                    <div class="budget-stat">
+                        <span class="label">Kalan Net Bütçe:</span>
+                        <span class="value" id="net-budget-val">0,00 ₺</span>
+                    </div>
+                    <div class="budget-stat">
+                        <span class="label">Günlük Harcama Limiti:</span>
+                        <span class="value" id="daily-limit-val">0,00 ₺</span>
+                    </div>
+                    <p class="budget-tip" id="budget-tip-msg">💡 Maaşınızı girdikten sonra bütçe ipuçları burada gösterilecektir.</p>
+                </div>
+                <div class="budget-alerts-card">
+                    <div class="next-payment-box" id="next-payment-indicator">
+                        <span class="label"><i class="fa-solid fa-bell"></i> En Yakın Ödeme:</span>
+                        <span class="value" id="next-payment-val">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <nav class="tabs">
             <button class="tab active" data-tab="kredi"><i class="fa-solid fa-credit-card"></i> <span>Kredi Hesapları</span></button>
             <button class="tab" data-tab="diger"><i class="fa-solid fa-building-columns"></i> <span>Diğer Bankalar</span></button>
@@ -128,6 +177,7 @@
                 <form id="form-kredi">
                     <div class="form-grid">
                         <label>Banka<input type="text" name="bankName" required></label>
+                        <label>Ödeme Günü (1-31)<input type="number" name="paymentDay" min="1" max="31" required placeholder="Örn: 15"></label>
                         <label>Ana Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
                         <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
                         <label>Aylık Taksit<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
@@ -141,7 +191,7 @@
                 <h2 class="section-title"><i class="fa-solid fa-list"></i> Kredi Listesi</h2>
                 <div class="table-wrap">
                     <table>
-                        <thead><tr><th>Banka</th><th>İlk Borç</th><th>Faiz</th><th>Taksit</th><th>Kalan</th><th>İlerleme</th><th></th></tr></thead>
+                        <thead><tr><th>Banka</th><th>Ödeme Günü</th><th>İlk Borç</th><th>Faiz</th><th>Taksit</th><th>Kalan</th><th>İlerleme</th><th></th></tr></thead>
                         <tbody id="table-kredi"></tbody>
                     </table>
                 </div>
@@ -155,6 +205,7 @@
                 <form id="form-diger">
                     <div class="form-grid">
                         <label>Banka<input type="text" name="bankName" required></label>
+                        <label>Ödeme Günü (1-31)<input type="number" name="paymentDay" min="1" max="31" required placeholder="Örn: 15"></label>
                         <label>Toplam Borç<input type="number" name="totalAmount" step="0.01" min="0" required></label>
                         <label>Kalan<input type="number" name="remainingAmount" step="0.01" min="0" required></label>
                         <label>Aylık Ödeme<input type="number" name="installmentAmount" step="0.01" min="0" required></label>
@@ -168,7 +219,7 @@
                 <h2 class="section-title"><i class="fa-solid fa-list"></i> Diğer Hesaplar</h2>
                 <div class="table-wrap">
                     <table>
-                        <thead><tr><th>Banka</th><th>İlk</th><th>Ödenen</th><th>Faiz</th><th>Aylık</th><th>Kalan</th><th></th></tr></thead>
+                        <thead><tr><th>Banka</th><th>Ödeme Günü</th><th>İlk</th><th>Ödenen</th><th>Faiz</th><th>Aylık</th><th>Kalan</th><th></th></tr></thead>
                         <tbody id="table-diger"></tbody>
                     </table>
                 </div>
