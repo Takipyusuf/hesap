@@ -53,3 +53,62 @@ const ACTION_LABELS = {
 function actionLabel(action) {
     return ACTION_LABELS[action] || action;
 }
+
+// ==========================================
+// ANTIGRAVITY AI - GEMINI ENTEGRASYONU
+// ==========================================
+
+/**
+ * Antigravity Yapay Zeka modeline soru gönderir ve yanıtı döndürür.
+ * @param {string} promptText - Kullanıcının yapay zekaya sorduğu soru
+ * @returns {Promise<string>} Yapay zekanın verdiği cevap
+ */
+async function askAntigravityAI(promptText) {
+    // Hafızadaki API anahtarını kontrol et
+    var config = window.ANTIGRAVITY_CONFIG || window.antigravityConfig;
+    
+    if (!config || !config.apiKey || config.apiKey === "") {
+        console.error("Antigravity AI Hatası: API Anahtarı bulunamadı! Lütfen firebase-config.js dosyasını kontrol edin.");
+        return "Sistem hatası: Yapay zeka yapılandırması eksik.";
+    }
+
+    // Google Gemini API endpoint (Hızlı ve optimize 2.5-flash modeli kullanılıyor)
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + config.apiKey;
+
+    // API'ye gönderilecek veri paketi
+    var requestBody = {
+        contents: [{
+            parts: [{ text: promptText }]
+        }]
+    };
+
+    try {
+        var response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error("API yanıt vermedi, durum kodu: " + response.status);
+        }
+
+        var data = await response.json();
+        
+        // Gelen veriden yapay zekanın metin cevabını ayıkla
+        if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            return "Yapay zekadan boş veya geçersiz bir yanıt döndü.";
+        }
+
+    } catch (error) {
+        console.error("Antigravity AI Bağlantı Hatası:", error);
+        return "Şu anda yapay zeka sunucularına bağlanamıyorum, lütfen internetinizi veya API anahtarınızı kontrol edin.";
+    }
+}
+
+// Diğer JS dosyalarından ve HTML içinden doğrudan çağrılabilmesi için global nesneye kaydediyoruz
+window.askAntigravityAI = askAntigravityAI;
