@@ -1,18 +1,31 @@
+// ==========================================
+// KULLANICI YAPILANDIRMASI & SABİTLER
+// ==========================================
 let currentUser = null;
 let userProfile = null;
 let debts = [];
 let payments = [];
 let paymentTargetId = null;
 
+// Admin e-postasını çakışmaları engellemek için burada da tanımlıyoruz
+const SYSTEM_ADMIN_EMAIL = "adminyusuf@gmail.com";
+
 function showAuth() {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app').classList.remove('visible');
+    const authScreen = document.getElementById('auth-screen');
+    const appScreen = document.getElementById('app');
+    if (authScreen) authScreen.style.display = 'flex';
+    if (appScreen) appScreen.classList.remove('visible');
 }
 
 function showApp() {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    document.getElementById('user-display-name').textContent = userProfile?.displayName || currentUser.email;
+    const authScreen = document.getElementById('auth-screen');
+    const appScreen = document.getElementById('app');
+    const displayEl = document.getElementById('user-display-name');
+
+    if (authScreen) authScreen.style.display = 'none';
+    if (appScreen) appScreen.classList.add('visible');
+    if (displayEl) displayEl.textContent = userProfile?.displayName || currentUser.email;
+    
     loadUserData();
 }
 
@@ -20,17 +33,22 @@ async function loadUserData() {
     if (!currentUser) return;
     const uid = currentUser.uid;
 
-    const [debtsSnap, paymentsSnap] = await Promise.all([
-        db.collection('debts').where('userId', '==', uid).get(),
-        db.collection('payments').where('userId', '==', uid).get()
-    ]);
+    try {
+        const [debtsSnap, paymentsSnap] = await Promise.all([
+            db.collection('debts').where('userId', '==', uid).get(),
+            db.collection('payments').where('userId', '==', uid).get()
+        ]);
 
-    debts = debtsSnap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
-    payments = paymentsSnap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
-    debts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-    payments.sort((a, b) => b.date.localeCompare(a.date));
+        debts = debtsSnap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+        payments = paymentsSnap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+        
+        debts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        payments.sort((a, b) => b.date.localeCompare(a.date));
 
-    renderAll();
+        renderAll();
+    } catch (error) {
+        console.error("Kullanıcı verileri yüklenirken hata:", error);
+    }
 }
 
 async function registerUser(e) {
@@ -41,7 +59,16 @@ async function registerUser(e) {
     const confirm = document.getElementById('reg-password2').value;
     const errEl = document.getElementById('auth-error');
 
+    if (!errEl) return;
     errEl.style.display = 'none';
+
+    // Güvenlik: Admin e-postası ile normal kullanıcı kaydı yapılamaz
+    if (email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+        errEl.textContent = 'Bu e-posta adresi yöneticiye aittir, kullanıcı olarak kaydedilemez.';
+        errEl.style.display = 'block';
+        return;
+    }
+
     if (password.length < 6) {
         errEl.textContent = 'Şifre en az 6 karakter olmalı.';
         errEl.style.display = 'block';
@@ -56,12 +83,17 @@ async function registerUser(e) {
     try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         await cred.user.updateProfile({ displayName: name });
+        
         await db.collection('users').doc(cred.user.uid).set({
             displayName: name,
-            email,
+            email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        await logActivity(cred.user.uid, name, 'register', email + ' ile kayıt');
+        
+        if (typeof logActivity === 'function') {
+            await logActivity(cred.user.uid, name, 'register', email + ' ile kayıt');
+        }
+        
         currentUser = cred.user;
         userProfile = { displayName: name, email };
         showApp();
@@ -76,14 +108,27 @@ async function loginUser(e) {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     const errEl = document.getElementById('auth-error');
+    
+    if (!errEl) return;
     errEl.style.display = 'none';
+
+    // Güvenlik: Admin bu ekrandan giriş yapmaya zorlanırsa engelle veya uyar
+    if (email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+        errEl.textContent = 'Yönetici hesabı buradan giriş yapamaz. Lütfen Yönetici Paneli ekranını kullanın.';
+        errEl.style.display = 'block';
+        return;
+    }
 
     try {
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const doc = await db.collection('users').doc(cred.user.uid).get();
+        
         userProfile = doc.exists ? doc.data() : { displayName: cred.user.displayName || email.split('@')[0], email };
         currentUser = cred.user;
-        await logActivity(cred.user.uid, userProfile.displayName, 'login', 'Giriş');
+        
+        if (typeof logActivity === 'function') {
+            await logActivity(cred.user.uid, userProfile.displayName, 'login', 'Giriş');
+        }
         showApp();
     } catch (err) {
         errEl.textContent = firebaseAuthError(err);
@@ -92,10 +137,10 @@ async function loginUser(e) {
 }
 
 async function logoutUser() {
-    if (currentUser) {
+    if (currentUser && typeof logActivity === 'function') {
         await logActivity(currentUser.uid, userProfile?.displayName, 'logout', 'Çıkış');
     }
-    await auth.signOut();
+    if (auth) await auth.signOut();
     currentUser = null;
     userProfile = null;
     debts = [];
@@ -136,9 +181,11 @@ async function addDebt(type, form) {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    const ref = await db.collection('debts').add(data);
-    await logActivity(currentUser.uid, userProfile.displayName, 'debt_add',
-        `${bankName} (${type}) — ${formatMoney(total)}`);
+    await db.collection('debts').add(data);
+    
+    if (typeof logActivity === 'function') {
+        await logActivity(currentUser.uid, userProfile.displayName, 'debt_add', `${bankName} (${type}) — ${formatMoney(total)}`);
+    }
 
     form.reset();
     await loadUserData();
@@ -148,15 +195,22 @@ function openPaymentModal(id) {
     const debt = debts.find(d => d.id === id);
     if (!debt || debt.remainingAmount <= 0) return;
     paymentTargetId = id;
-    document.getElementById('payment-modal-bank').textContent = debt.bankName + ' — Kalan: ' + formatMoney(debt.remainingAmount);
-    document.getElementById('payment-amount').value = Math.min(debt.installmentAmount, debt.remainingAmount).toFixed(2);
-    document.getElementById('payment-date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('payment-modal').classList.add('open');
+    
+    const modalBank = document.getElementById('payment-modal-bank');
+    const modalAmount = document.getElementById('payment-amount');
+    const modalDate = document.getElementById('payment-date');
+    const modalContainer = document.getElementById('payment-modal');
+
+    if (modalBank) modalBank.textContent = debt.bankName + ' — Kalan: ' + formatMoney(debt.remainingAmount);
+    if (modalAmount) modalAmount.value = Math.min(debt.installmentAmount, debt.remainingAmount).toFixed(2);
+    if (modalDate) modalDate.value = new Date().toISOString().slice(0, 10);
+    if (modalContainer) modalContainer.classList.add('open');
 }
 
 function closePaymentModal() {
     paymentTargetId = null;
-    document.getElementById('payment-modal').classList.remove('open');
+    const modalContainer = document.getElementById('payment-modal');
+    if (modalContainer) modalContainer.classList.remove('open');
 }
 
 async function confirmPayment() {
@@ -189,8 +243,9 @@ async function confirmPayment() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    await logActivity(currentUser.uid, userProfile.displayName, 'payment',
-        `${debt.bankName} — ${formatMoney(payAmount)} (${dateStr})`);
+    if (typeof logActivity === 'function') {
+        await logActivity(currentUser.uid, userProfile.displayName, 'payment', `${debt.bankName} — ${formatMoney(payAmount)} (${dateStr})`);
+    }
 
     closePaymentModal();
     await loadUserData();
@@ -202,7 +257,10 @@ async function deleteDebt(id) {
     if (!debt) return;
 
     await db.collection('debts').doc(debt.firestoreId).delete();
-    await logActivity(currentUser.uid, userProfile.displayName, 'debt_delete', debt.bankName);
+    
+    if (typeof logActivity === 'function') {
+        await logActivity(currentUser.uid, userProfile.displayName, 'debt_delete', debt.bankName);
+    }
     await loadUserData();
 }
 
@@ -217,6 +275,7 @@ function renderTable(type, tbodyId, emptyId, showPaid) {
     const list = debts.filter(d => d.type === type);
     const tbody = document.getElementById(tbodyId);
     const empty = document.getElementById(emptyId);
+    if (!tbody || !empty) return;
     tbody.innerHTML = '';
 
     if (list.length === 0) {
@@ -261,25 +320,36 @@ function renderSummary() {
 
     const monthPaid = payments.filter(p => p.monthKey === currentMonth).reduce((s, p) => s + p.amount, 0);
 
-    document.getElementById('total-remaining').textContent = formatMoney(totalRemaining);
-    document.getElementById('total-paid-sub').textContent = 'Toplam ödenen: ' + formatMoney(totalPaid);
-    document.getElementById('month-paid').textContent = formatMoney(monthPaid);
-    document.getElementById('month-label').textContent = new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-    document.getElementById('monthly-plan').textContent = formatMoney(monthlyPlan);
-    document.getElementById('account-count').textContent = debts.length;
-    document.getElementById('credit-other-split').textContent = `${kredi} kredi · ${diger} diğer`;
+    const elRemaining = document.getElementById('total-remaining');
+    const elPaidSub = document.getElementById('total-paid-sub');
+    const elMonthPaid = document.getElementById('month-paid');
+    const elMonthLabel = document.getElementById('month-label');
+    const elMonthlyPlan = document.getElementById('monthly-plan');
+    const elAccountCount = document.getElementById('account-count');
+    const elSplit = document.getElementById('credit-other-split');
+
+    if (elRemaining) elRemaining.textContent = formatMoney(totalRemaining);
+    if (elPaidSub) elPaidSub.textContent = 'Toplam ödenen: ' + formatMoney(totalPaid);
+    if (elMonthPaid) elMonthPaid.textContent = formatMoney(monthPaid);
+    if (elMonthLabel) elMonthLabel.textContent = new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+    if (elMonthlyPlan) elMonthlyPlan.textContent = formatMoney(monthlyPlan);
+    if (elAccountCount) elAccountCount.textContent = debts.length;
+    if (elSplit) elSplit.textContent = `${kredi} kredi · ${diger} diğer`;
 }
 
 function renderHistory() {
     const monthInput = document.getElementById('history-month');
+    if (!monthInput) return;
     if (!monthInput.value) monthInput.value = new Date().toISOString().slice(0, 7);
     const selected = monthInput.value;
     const filtered = payments.filter(p => p.monthKey === selected);
 
-    document.getElementById('selected-month-total').textContent = formatMoney(filtered.reduce((s, p) => s + p.amount, 0));
+    const elSelectedTotal = document.getElementById('selected-month-total');
+    if (elSelectedTotal) elSelectedTotal.textContent = formatMoney(filtered.reduce((s, p) => s + p.amount, 0));
 
     const list = document.getElementById('history-list');
     const empty = document.getElementById('empty-history');
+    if (!list || !empty) return;
     list.innerHTML = '';
 
     if (filtered.length === 0) {
@@ -296,17 +366,19 @@ function renderHistory() {
     });
 
     const summaryBody = document.getElementById('monthly-summary-table');
-    summaryBody.innerHTML = '';
-    const d = new Date();
-    for (let i = 0; i < 6; i++) {
-        const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
-        const mk = m.toISOString().slice(0, 7);
-        const pays = payments.filter(p => p.monthKey === mk);
-        const total = pays.reduce((s, p) => s + p.amount, 0);
-        const label = m.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${label}</td><td><strong>${formatMoney(total)}</strong></td><td>${pays.length}</td>`;
-        summaryBody.appendChild(tr);
+    if (summaryBody) {
+        summaryBody.innerHTML = '';
+        const d = new Date();
+        for (let i = 0; i < 6; i++) {
+            const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+            const mk = m.toISOString().slice(0, 7);
+            const pays = payments.filter(p => p.monthKey === mk);
+            const total = pays.reduce((s, p) => s + p.amount, 0);
+            const label = m.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${label}</td><td><strong>${formatMoney(total)}</strong></td><td>${pays.length}</td>`;
+            summaryBody.appendChild(tr);
+        }
     }
 }
 
@@ -323,7 +395,9 @@ async function changePassword() {
     const confirm = document.getElementById('new-password-confirm').value.trim();
     const msg = document.getElementById('password-msg');
 
+    if (!msg) return;
     msg.style.display = 'none';
+    
     if (newPw.length < 6) {
         msg.style.color = 'var(--danger)';
         msg.textContent = 'Yeni şifre en az 6 karakter.';
@@ -341,7 +415,11 @@ async function changePassword() {
         const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPw);
         await currentUser.reauthenticateWithCredential(cred);
         await currentUser.updatePassword(newPw);
-        await logActivity(currentUser.uid, userProfile.displayName, 'password_change', 'Şifre güncellendi');
+        
+        if (typeof logActivity === 'function') {
+            await logActivity(currentUser.uid, userProfile.displayName, 'password_change', 'Şifre güncellendi');
+        }
+        
         msg.style.color = 'var(--success)';
         msg.textContent = 'Şifre güncellendi.';
         msg.style.display = 'block';
@@ -356,43 +434,68 @@ async function changePassword() {
 }
 
 function initUserApp() {
+    // Sekme geçiş dinleyicileri
     document.querySelectorAll('.auth-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
             tab.classList.add('active');
-            document.getElementById(tab.dataset.form).classList.add('active');
-            document.getElementById('auth-error').style.display = 'none';
+            const targetForm = document.getElementById(tab.dataset.form);
+            if (targetForm) targetForm.classList.add('active');
+            const errEl = document.getElementById('auth-error');
+            if (errEl) errEl.style.display = 'none';
         });
     });
 
-    document.getElementById('form-register').addEventListener('submit', registerUser);
-    document.getElementById('form-login').addEventListener('submit', loginUser);
-    document.getElementById('logout-btn').addEventListener('click', logoutUser);
-    document.getElementById('form-kredi').addEventListener('submit', e => { e.preventDefault(); addDebt('kredi', e.target); });
-    document.getElementById('form-diger').addEventListener('submit', e => { e.preventDefault(); addDebt('diger', e.target); });
-    document.getElementById('payment-cancel').addEventListener('click', closePaymentModal);
-    document.getElementById('payment-confirm').addEventListener('click', confirmPayment);
-    document.getElementById('history-month').addEventListener('change', renderHistory);
-    document.getElementById('change-password-btn').addEventListener('click', changePassword);
+    const formRegister = document.getElementById('form-register');
+    const formLogin = document.getElementById('form-login');
+    const logoutBtn = document.getElementById('logout-btn');
+    const formKredi = document.getElementById('form-kredi');
+    const formDiger = document.getElementById('form-diger');
+    const payCancel = document.getElementById('payment-cancel');
+    const payConfirm = document.getElementById('payment-confirm');
+    const histMonth = document.getElementById('history-month');
+    const chgPwBtn = document.getElementById('change-password-btn');
+
+    if (formRegister) formRegister.addEventListener('submit', registerUser);
+    if (formLogin) formLogin.addEventListener('submit', loginUser);
+    if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+    if (formKredi) formKredi.addEventListener('submit', e => { e.preventDefault(); addDebt('kredi', e.target); });
+    if (formDiger) formDiger.addEventListener('submit', e => { e.preventDefault(); addDebt('diger', e.target); });
+    if (payCancel) payCancel.addEventListener('click', closePaymentModal);
+    if (payConfirm) payConfirm.addEventListener('click', confirmPayment);
+    if (histMonth) histMonth.addEventListener('change', renderHistory);
+    if (chgPwBtn) chgPwBtn.addEventListener('click', changePassword);
 
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             tab.classList.add('active');
-            document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            const targetPanel = document.getElementById('panel-' + tab.dataset.tab);
+            if (targetPanel) targetPanel.classList.add('active');
         });
     });
 
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            currentUser = user;
-            const doc = await db.collection('users').doc(user.uid).get();
-            userProfile = doc.exists ? doc.data() : { displayName: user.displayName || user.email, email: user.email };
-            showApp();
-        } else {
-            showAuth();
-        }
-    });
+    // Oturum durum dinleyicisi (Admin ile çakışmayı önleyen filtreli yapı)
+    if (auth) {
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                // Eğer giriş yapan hesap admin e-postası ise kullanıcı panelini yükleme
+                if (user.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+                    return; 
+                }
+                currentUser = user;
+                const doc = await db.collection('users').doc(user.uid).get();
+                userProfile = doc.exists ? doc.data() : { displayName: user.displayName || user.email, email: user.email };
+                showApp();
+            } else {
+                // Sadece kullanıcı ekranındaysak auth ekranını göster
+                const authScreen = document.getElementById('auth-screen');
+                if (authScreen) showAuth();
+            }
+        });
+    }
 }
+
+window.initUserApp = initUserApp;
