@@ -117,6 +117,23 @@
         </div>
     </main>
 
+    <div id="ai-widget-container">
+        <div id="ai-chat-window">
+            <div id="ai-chat-header">
+                <span>🚀 Antigravity AI — Yönetici</span>
+                <button onclick="toggleAIChat()" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:16px;">✕</button>
+            </div>
+            <div id="ai-chat-body">
+                <div class="ai-msg bot">Yönetici Paneline hoş geldiniz. Sistem genelindeki kullanıcı hareketlerini, borç dengelerini analiz etmede veya teknik bir soruyu çözmede size yardımcı olabilirim.</div>
+            </div>
+            <div id="ai-chat-footer">
+                <input type="text" id="ai-chat-input" placeholder="Yöneticiye özel bir soru sorun...">
+                <button id="ai-chat-send">➤</button>
+            </div>
+        </div>
+        <button id="ai-chat-button" class="floating-ai" style="background:var(--admin);" onclick="toggleAIChat()">🤖</button>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
