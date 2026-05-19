@@ -165,10 +165,28 @@ function firebaseAuthError(err) {
 
 async function addDebt(type, form) {
     const fd = new FormData(form);
-    const total = parseFloat(fd.get('totalAmount'));
-    const remaining = parseFloat(fd.get('remainingAmount'));
-    const bankName = fd.get('bankName').trim();
+    const bankName = fd.get('bankName');
     const paymentDay = fd.get('paymentDay') ? parseInt(fd.get('paymentDay'), 10) : null;
+    const installmentAmount = parseFloat(fd.get('installmentAmount'));
+    const interestRate = parseFloat(fd.get('interestRate')) || 0;
+
+    let totalAmount = 0;
+    let remainingAmount = 0;
+    let totalInstallments = null;
+    let paidSoFar = 0;
+
+    if (type === 'kredi') {
+        totalInstallments = parseInt(fd.get('totalInstallments'), 10);
+        const paidInstallments = parseInt(fd.get('paidInstallments') || 0, 10);
+        
+        totalAmount = installmentAmount * totalInstallments;
+        remainingAmount = installmentAmount * Math.max(0, totalInstallments - paidInstallments);
+        paidSoFar = installmentAmount * paidInstallments;
+    } else {
+        totalAmount = parseFloat(fd.get('totalAmount'));
+        remainingAmount = parseFloat(fd.get('remainingAmount'));
+        paidSoFar = totalAmount - remainingAmount;
+    }
 
     const data = {
         id: Date.now(),
@@ -177,19 +195,19 @@ async function addDebt(type, form) {
         type,
         bankName,
         paymentDay,
-        totalAmount: total,
-        remainingAmount: remaining,
-        installmentAmount: parseFloat(fd.get('installmentAmount')),
-        interestRate: parseFloat(fd.get('interestRate')) || 0,
-        totalInstallments: fd.get('totalInstallments') ? parseInt(fd.get('totalInstallments'), 10) : null,
-        paidSoFar: type === 'diger' ? (parseFloat(fd.get('paidSoFar')) || (total - remaining)) : (total - remaining),
+        totalAmount,
+        remainingAmount,
+        installmentAmount,
+        interestRate,
+        totalInstallments,
+        paidSoFar,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     await db.collection('debts').add(data);
     
     if (typeof logActivity === 'function') {
-        await logActivity(currentUser.uid, userProfile.displayName, 'debt_add', `${bankName} (${type}) — ${formatMoney(total)}`);
+        await logActivity(currentUser.uid, userProfile.displayName, 'debt_add', `${bankName} (${type}) — ${formatMoney(totalAmount)}`);
     }
 
     form.reset();
