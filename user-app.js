@@ -26,6 +26,9 @@ function showApp() {
     if (appScreen) appScreen.classList.add('visible');
     if (displayEl) displayEl.textContent = userProfile?.displayName || currentUser.email;
     
+    const salaryInput = document.getElementById('salary-input');
+    if (salaryInput) salaryInput.value = userProfile?.salary || '';
+    
     loadUserData();
 }
 
@@ -165,6 +168,7 @@ async function addDebt(type, form) {
     const total = parseFloat(fd.get('totalAmount'));
     const remaining = parseFloat(fd.get('remainingAmount'));
     const bankName = fd.get('bankName').trim();
+    const paymentDay = fd.get('paymentDay') ? parseInt(fd.get('paymentDay'), 10) : null;
 
     const data = {
         id: Date.now(),
@@ -172,6 +176,7 @@ async function addDebt(type, form) {
         userName: userProfile.displayName,
         type,
         bankName,
+        paymentDay,
         totalAmount: total,
         remainingAmount: remaining,
         installmentAmount: parseFloat(fd.get('installmentAmount')),
@@ -271,6 +276,27 @@ function renderProgress(debt) {
             <span style="font-size:0.75rem;color:var(--text-muted);">${pct.toFixed(0)}%</span>`;
 }
 
+function findClosestDebtId() {
+    let closestDebtId = null;
+    let minDiff = Infinity;
+    const now = new Date();
+    const currentDay = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    debts.forEach(d => {
+        if (d.remainingAmount <= 0 || !d.paymentDay) return;
+        let diff = d.paymentDay - currentDay;
+        if (diff < 0) {
+            diff = (daysInMonth - currentDay) + d.paymentDay;
+        }
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestDebtId = d.id;
+        }
+    });
+    return { closestDebtId, minDiff };
+}
+
 function renderTable(type, tbodyId, emptyId, showPaid) {
     const list = debts.filter(d => d.type === type);
     const tbody = document.getElementById(tbodyId);
@@ -284,12 +310,21 @@ function renderTable(type, tbodyId, emptyId, showPaid) {
     }
     empty.style.display = 'none';
 
+    const { closestDebtId } = findClosestDebtId();
+
     list.forEach(debt => {
         const done = debt.remainingAmount <= 0;
         const paid = debt.paidSoFar ?? (debt.totalAmount - debt.remainingAmount);
+        
+        const isClosest = debt.id === closestDebtId && !done;
         const tr = document.createElement('tr');
+        if (isClosest) {
+            tr.className = 'highlight-payment';
+        }
+        
         tr.innerHTML = `
             <td><strong>${escapeHtml(debt.bankName)}</strong></td>
+            <td>Her ayın <strong>${debt.paymentDay || '-'}</strong>'i</td>
             <td>${formatMoney(debt.totalAmount)}</td>
             ${showPaid ? `<td>${formatMoney(paid)}</td>` : ''}
             <td>% ${(debt.interestRate || 0).toFixed(2)}</td>
@@ -335,6 +370,56 @@ function renderSummary() {
     if (elMonthlyPlan) elMonthlyPlan.textContent = formatMoney(monthlyPlan);
     if (elAccountCount) elAccountCount.textContent = debts.length;
     if (elSplit) elSplit.textContent = `${kredi} kredi · ${diger} diğer`;
+
+    // Aylık Bütçe Planlama Hesaplamaları
+    const salary = parseFloat(userProfile?.salary) || 0;
+    const remainingBudget = salary - monthlyPlan;
+    
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remainingDays = daysInMonth - now.getDate() + 1;
+    
+    const dailyLimit = remainingDays > 0 ? (remainingBudget > 0 ? (remainingBudget / remainingDays) : 0) : 0;
+    
+    const elNetVal = document.getElementById('net-budget-val');
+    const elDailyVal = document.getElementById('daily-limit-val');
+    const elTipMsg = document.getElementById('budget-tip-msg');
+    
+    if (elNetVal) {
+        elNetVal.textContent = formatMoney(remainingBudget);
+        if (remainingBudget < 0) {
+            elNetVal.className = 'value budget-negative';
+        } else {
+            elNetVal.className = 'value';
+        }
+    }
+    
+    if (elDailyVal) {
+        elDailyVal.textContent = formatMoney(dailyLimit);
+    }
+    
+    if (elTipMsg) {
+        if (salary <= 0) {
+            elTipMsg.innerHTML = `💡 Maaşınızı sol taraftan girerek bütçe planınızı görebilirsiniz.`;
+        } else if (remainingBudget < 0) {
+            elTipMsg.innerHTML = `⚠️ **Dikkat!** Aylık taksit ödemeleriniz maaşınızı aşıyor! Harcamalarınıza dikkat etmelisiniz.`;
+        } else {
+            elTipMsg.innerHTML = `💡 **Bütçe İpucu:** Borçlarınızı ödedikten sonra günde en fazla **${formatMoney(dailyLimit)}** harcayarak ay sonunu rahatça getirebilirsiniz! (Kalan gün: ${remainingDays})`;
+        }
+    }
+    
+    // En yakın yaklaşan ödeme göstergesi
+    const { closestDebtId, minDiff } = findClosestDebtId();
+    const closestDebt = debts.find(d => d.id === closestDebtId);
+    const elNextPaymentVal = document.getElementById('next-payment-val');
+    
+    if (elNextPaymentVal) {
+        if (closestDebt) {
+            elNextPaymentVal.textContent = `${closestDebt.bankName} (Ayın ${closestDebt.paymentDay}'i — ${minDiff} gün kaldı)`;
+        } else {
+            elNextPaymentVal.textContent = 'Aktif ödemeniz yok';
+        }
+    }
 }
 
 function renderHistory() {
@@ -466,6 +551,26 @@ function initUserApp() {
     if (payConfirm) payConfirm.addEventListener('click', confirmPayment);
     if (histMonth) histMonth.addEventListener('change', renderHistory);
     if (chgPwBtn) chgPwBtn.addEventListener('click', changePassword);
+
+    const saveSalaryBtn = document.getElementById('save-salary-btn');
+    if (saveSalaryBtn) {
+        saveSalaryBtn.addEventListener('click', async () => {
+            const salaryInput = document.getElementById('salary-input');
+            if (!salaryInput) return;
+            const val = parseFloat(salaryInput.value) || 0;
+            if (val < 0) return alert('Geçerli bir maaş girin.');
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update({ salary: val });
+                userProfile.salary = val;
+                renderSummary();
+                alert('Maaşınız başarıyla kaydedildi!');
+            } catch (error) {
+                console.error("Maaş güncellenirken hata:", error);
+                alert('Maaş kaydedilemedi. Lütfen tekrar deneyin.');
+            }
+        });
+    }
 
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
