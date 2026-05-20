@@ -14,12 +14,12 @@ const path = require('path');
 // ⚙️ YAPILANDIRMA AYARLARI
 // ==========================================
 // 1. Telegram Ayarları
-const BOT_TOKEN = '8883186345:AAEZAsVJ0Bk_0JKnCR9SL82s_nJynN-Ru6U';
-const ALLOWED_CHAT_ID = '8995151756';
+const BOT_TOKEN = process.env.BOT_TOKEN || '8883186345:AAEZAsVJ0Bk_0JKnCR9SL82s_nJynN-Ru6U';
+const ALLOWED_CHAT_ID = process.env.ALLOWED_CHAT_ID || '8995151756';
 
 // 2. GitHub Ayarları (Canlı deponuzu uzaktan düzenlemek için)
-// ⚠️ ÖNEMLİ: Aşağıdaki GITHUB_TOKEN alanına GitHub'dan aldığınız erişim anahtarını (PAT) yazmalısınız.
-const GITHUB_TOKEN = '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';
+// ⚠️ GÜVENLİK: GitHub'ın tokeni iptal etmemesi için tokeni Render'ın "Environment Variables" kısmına kaydedeceğiz.
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || 'BURAYA_KENDI_TOKENINIZI_YAZABILIRSINIZ';
 const GITHUB_OWNER = 'Takipyusuf';
 const GITHUB_REPO = 'hesap';
 const GITHUB_BRANCH = 'main';
