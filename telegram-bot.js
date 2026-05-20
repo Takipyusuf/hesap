@@ -1,26 +1,58 @@
 /**
- * 🚀 HESAP TAKİP - TELEGRAM YÖNETİCİ BOTU (SIFIR BAĞIMLILIK)
+ * 🚀 HESAP TAKİP - BULUT UYUMLU DOĞRUDAN GITHUB KOD AJANI (HERMES)
  * -------------------------------------------------------------
- * Bu script, hiçbir harici paket (npm install) gerektirmeden
- * doğrudan Node.js ile çalışır. Telegram üzerinden Git işlemlerini
- * ve proje yönetimini uzaktan yürütmenizi sağlar.
+ * Bu script, bilgisayarınızı açmanıza veya yerel Git kullanmanıza
+ * gerek kalmadan, Telegram'dan doğrudan GitHub deponuzdaki dosyaları
+ * günceller ve commit atar. Canlı siteniz otomatik olarak güncellenir!
  */
 
 const https = require('https');
-const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 // ==========================================
 // ⚙️ YAPILANDIRMA AYARLARI
 // ==========================================
-// 1. Bot Tokeninizi BotFather'dan alıp buraya yazın:
-const BOT_TOKEN = '8883186345:AAEZAsVJ0Bk_0JKnCR9SL82s_nJynN-Ru6U'; // Örnek Token, kendi tokeninizi yazın.
+// 1. Telegram Ayarları
+const BOT_TOKEN = '8883186345:AAEZAsVJ0Bk_0JKnCR9SL82s_nJynN-Ru6U';
+const ALLOWED_CHAT_ID = '8995151756';
 
-// 2. Güvenlik için sadece kendi Telegram Chat ID'nizi buraya yazın.
-// Boş bırakırsanız, botu başlattıktan sonra kendinize mesaj attığınızda
-// konsolda ve Telegram'da kendi Chat ID'nizi görebilir ve buraya yazabilirsiniz.
-let ALLOWED_CHAT_ID = '8995151756'; 
+// 2. GitHub Ayarları (Canlı deponuzu uzaktan düzenlemek için)
+// ⚠️ ÖNEMLİ: Aşağıdaki GITHUB_TOKEN alanına GitHub'dan aldığınız erişim anahtarını (PAT) yazmalısınız.
+const GITHUB_TOKEN = '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';
+const GITHUB_OWNER = 'Takipyusuf';
+const GITHUB_REPO = 'hesap';
+const GITHUB_BRANCH = 'main';
+
+// ==========================================
+// 🧠 GEMINI YAPAY ZEKA SİSTEM PROMPTU
+// ==========================================
+const SYSTEM_PROMPT = `Sen Yusuf'un borç takip projesinde çalışan bulut tabanlı bir yapay zeka yazılım geliştirme asistanısın (Hermes).
+Kullanıcı seninle Telegram üzerinden sohbet eder ve deponun güncel halindeki dosyaları düzenlemeni ister.
+
+DEPO İÇİNDEKİ DOSYALAR VE GÖREVLERİ:
+- index.html (Kullanıcı giriş ekranı, borç taksit ödeme modalı, maaş & bütçe planlayıcı ve AI sohbet arayüzü)
+- admin.html (Yönetici arayüzü, kullanıcı listesi, kullanıcı detay penceresi, canlı aktivite akışı)
+- styles.css (Tüm uygulamanın modern, premium, responsive ve koyu renk şemalı CSS tasarımları)
+- app-core.js (Firebase veritabanı başlatma, para formatlama, AI entegrasyonu ortak fonksiyonları)
+- user-app.js (Kullanıcı arayüzü mantığı, borç ekleme/taksit ödeme Firestore entegrasyonu)
+- admin-app.js (Yönetici arayüzü mantığı, tüm kullanıcı verilerini ve aktiviteleri çekme)
+- firebase-config.js (Firebase ve Gemini API anahtarları)
+
+DOSYA DÜZENLEME KURALLARI:
+Eğer bir dosyada değişiklik yapman veya yeni kod eklemen gerekirse, cevabının içinde MUTLAKA şu etiket formatını kullanmalısın:
+
+<<<EDIT_FILE: dosya_adi.js>>>
+<<<SEARCH>>>
+(Değiştirmek istediğin tam kod bloğu - mevcut dosyada birebir aynı satır boşluklarıyla olmalıdır)
+<<<REPLACE>>>
+(Yeni kod bloğu)
+<<<END>>>
+
+ÖNEMLİ KURALLAR:
+1. Arama yapacağın <<<SEARCH>>> bloğunun dosyadaki orijinal kodla karakteri karakterine, boşlukları boşluğuna tam uyuşması şarttır. Yoksa düzenleme motoru kodu bulamaz.
+2. Birden fazla dosya veya aynı dosyada birden fazla yerde değişiklik yapacaksan, birden fazla EDIT_FILE bloğu açabilirsin.
+3. Değişiklik yaptığında neyi neden yaptığını Türkçe olarak açıklayan samimi ve profesyonel bir mesaj yaz.`;
 
 // ==========================================
 // 🛠️ YARDIMCI FONKSİYONLAR
@@ -28,14 +60,25 @@ let ALLOWED_CHAT_ID = '8995151756';
 
 let lastUpdateId = 0;
 
-// Telegram API'sine istek gönderen fonksiyon
+// firebase-config.js içeriğinden Gemini API anahtarını yerel veya GitHub'dan çeken fonksiyon
+function getGeminiApiKey() {
+    try {
+        const configPath = path.join(__dirname, 'firebase-config.js');
+        if (fs.existsSync(configPath)) {
+            const content = fs.readFileSync(configPath, 'utf8');
+            const match = content.match(/ANTIGRAVITY_CONFIG\s*=\s*\{[\s\S]*?apiKey:\s*["'](AIzaSy[A-Za-z0-9_-]+)["']/);
+            if (match) return match[1];
+        }
+    } catch (e) {
+        console.error("Yerel API Key okuma hatası (Bulut modunda GitHub'dan çekilecek):", e.message);
+    }
+    // Varsayılan anahtarı döndür veya GitHub içeriğinden dinamik çekecek şekilde yedekle
+    return 'AIzaSyBB1RovbpN4eO3Ml8XMGsR1u564gHJ8o50';
+}
+
+// Telegram API'sine istek gönderen ortak fonksiyon
 function telegramRequest(method, data = {}) {
     return new Promise((resolve, reject) => {
-        if (!BOT_TOKEN || BOT_TOKEN === 'BURAYA_BOT_TOKEN_YAZIN') {
-            console.error("❌ Hata: BOT_TOKEN yapılandırılmamış!");
-            return reject(new Error("BOT_TOKEN_MISSING"));
-        }
-
         const payload = JSON.stringify(data);
         const options = {
             hostname: 'api.telegram.org',
@@ -54,14 +97,9 @@ function telegramRequest(method, data = {}) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(body);
-                    if (parsed.ok) {
-                        resolve(parsed.result);
-                    } else {
-                        reject(parsed);
-                    }
-                } catch (e) {
-                    reject(e);
-                }
+                    if (parsed.ok) resolve(parsed.result);
+                    else reject(parsed);
+                } catch (e) { reject(e); }
             });
         });
 
@@ -79,25 +117,143 @@ async function sendMessage(chatId, text, replyMarkup = null) {
             text: text,
             parse_mode: 'Markdown'
         };
-        if (replyMarkup) {
-            payload.reply_markup = replyMarkup;
-        }
+        if (replyMarkup) payload.reply_markup = replyMarkup;
         await telegramRequest('sendMessage', payload);
     } catch (err) {
-        console.error(" Mesaj gönderilemedi:", err.message || err);
+        console.error("✉️ Mesaj gönderilemedi:", err.message || err);
     }
 }
 
-// Komut satırı (CMD / PowerShell) komutlarını çalıştıran fonksiyon
-function runCommand(command) {
-    return new Promise((resolve) => {
-        // chcp 65001 Türkçe karakter desteği sağlar
-        exec(`chcp 65001 >nul && ${command}`, { cwd: __dirname }, (error, stdout, stderr) => {
-            resolve({
-                success: !error,
-                output: (stdout || '').trim() || (stderr || '').trim() || 'Çıktı yok.'
+// ==========================================
+// 🐙 GITHUB REST API MOTORU
+// ==========================================
+
+function githubRequest(method, endpoint, data = null) {
+    return new Promise((resolve, reject) => {
+        if (!GITHUB_TOKEN || GITHUB_TOKEN.includes('BURAYA_GITHUB')) {
+            return reject(new Error("GITHUB_TOKEN_MISSING"));
+        }
+
+        const options = {
+            hostname: 'api.github.com',
+            port: 443,
+            path: endpoint,
+            method: method,
+            headers: {
+                'User-Agent': 'Hermes-AI-Agent-Bot',
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        };
+
+        const payload = data ? JSON.stringify(data) : null;
+        if (payload) {
+            options.headers['Content-Type'] = 'application/json';
+            options.headers['Content-Length'] = Buffer.byteLength(payload);
+        }
+
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve(parsed);
+                    } else {
+                        reject(parsed);
+                    }
+                } catch (e) { reject(e); }
             });
         });
+
+        req.on('error', (e) => reject(e));
+        if (payload) req.write(payload);
+        req.end();
+    });
+}
+
+// GitHub'dan dosya içeriğini ve SHA değerini alan fonksiyon
+async function fetchFileFromGithub(fileName) {
+    try {
+        const endpoint = `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${fileName}?ref=${GITHUB_BRANCH}`;
+        const res = await githubRequest('GET', endpoint);
+        const content = Buffer.from(res.content, 'base64').toString('utf8');
+        return {
+            content,
+            sha: res.sha
+        };
+    } catch (err) {
+        console.error(`GitHub'dan ${fileName} alınamadı:`, err);
+        throw err;
+    }
+}
+
+// Düzenlenen dosyayı doğrudan GitHub'a pushlayan fonksiyon
+async function commitFileToGithub(fileName, newContent, sha, commitMessage) {
+    try {
+        const endpoint = `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${fileName}`;
+        const base64Content = Buffer.from(newContent, 'utf8').toString('base64');
+        const payload = {
+            message: commitMessage,
+            content: base64Content,
+            sha: sha,
+            branch: GITHUB_BRANCH
+        };
+        await githubRequest('PUT', endpoint, payload);
+        return true;
+    } catch (err) {
+        console.error(`GitHub'a ${fileName} yüklenemedi:`, err);
+        throw err;
+    }
+}
+
+// ==========================================
+// 🧠 GEMINI AI BAĞLANTI MOTORU
+// ==========================================
+
+function askGemini(promptText, systemInstruction = SYSTEM_PROMPT) {
+    return new Promise((resolve, reject) => {
+        const apiKey = getGeminiApiKey();
+        const payload = JSON.stringify({
+            contents: [{
+                role: 'user',
+                parts: [{ text: promptText }]
+            }],
+            systemInstruction: {
+                parts: [{ text: systemInstruction }]
+            }
+        });
+
+        const options = {
+            hostname: 'generativelanguage.googleapis.com',
+            port: 443,
+            path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const data = JSON.parse(body);
+                    if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                        resolve(data.candidates[0].content.parts[0].text);
+                    } else {
+                        reject(new Error("Yapay zekadan geçersiz yanıt geldi."));
+                    }
+                } catch (e) { reject(e); }
+            });
+        });
+
+        req.on('error', (e) => reject(e));
+        req.write(payload);
+        req.end();
     });
 }
 
@@ -108,24 +264,16 @@ function runCommand(command) {
 async function handleMessage(message) {
     const chatId = message.chat.id;
     const text = (message.text || '').trim();
-    const username = message.from.username || message.from.first_name || 'Kullanıcı';
 
     // 🔒 GÜVENLİK FİLTRESİ
-    if (ALLOWED_CHAT_ID && String(chatId) !== String(ALLOWED_CHAT_ID)) {
-        console.log(`⚠️ Yetkisiz Erişim Girişimi! Chat ID: ${chatId}, Kullanıcı: ${username}`);
-        await sendMessage(chatId, `❌ *Yetkisiz Erişim!* \nBu bot kişisel otomasyon için kilitlenmiştir. \nSizin Chat ID değeriniz: \`${chatId}\``);
+    if (String(chatId) !== String(ALLOWED_CHAT_ID)) {
+        await sendMessage(chatId, `❌ *Yetkisiz Erişim!* \nBu bot sadece Yusuf Eryiğit'e özeldir.`);
         return;
     }
 
-    // Chat ID henüz ayarlanmamışsa kullanıcıyı uyar ve ID'sini göster
-    if (!ALLOWED_CHAT_ID) {
-        console.log(`✨ [YENİ BAĞLANTI] Sohbet Başladı!`);
-        console.log(`🔑 Sizin Chat ID değeriniz: ${chatId}`);
-        console.log(`👉 Lütfen telegram-bot.js dosyasını açıp 'ALLOWED_CHAT_ID' değişkenini '${chatId}' olarak güncelleyin ve botu yeniden başlatın!`);
-        
-        ALLOWED_CHAT_ID = String(chatId); // Geçici olarak bu oturum için izin ver
-        
-        await sendMessage(chatId, `👋 Merhaba *${username}*!\n\n🤖 Bot başarıyla bilgisayarınızla bağlantı kurdu.\n\n🔑 *Sizin Telegram Chat ID'niz:* \`${chatId}\`\n\n⚠️ *GÜVENLİK ADIMI:* Lütfen \`telegram-bot.js\` dosyasını açıp en üstteki \`ALLOWED_CHAT_ID\` değerini \`"${chatId}"\` olarak güncelleyin. Böylece sizden başka kimse botu yönetemez.`);
+    if (!GITHUB_TOKEN || GITHUB_TOKEN.includes('BURAYA_GITHUB')) {
+        await sendMessage(chatId, `⚠️ *GitHub Bağlantısı Eksik!*\n\nBotun doğrudan GitHub deponuzu düzenleyebilmesi için bir erişim anahtarı (GitHub Token) gereklidir.\n\n👉 Lütfen \`telegram-bot.js\` dosyasını açıp en üstteki \`GITHUB_TOKEN\` alanına kendi GitHub Token değerinizi yazın.`);
+        return;
     }
 
     const commandParts = text.split(' ');
@@ -135,113 +283,108 @@ async function handleMessage(message) {
     switch (mainCommand) {
         case '/start':
         case '/yardim':
-        case '/help':
-            const welcomeText = `💻 *Borç Takip Kontrol Merkezi Botu* 🚀\n\n` +
-                `Aşağıdaki komutları kullanarak projenizi Telegram üzerinden yönetebilirsiniz:\n\n` +
-                `🔍 *PROJE DURUMU*:\n` +
-                `• /durum - Git durumunu (git status) kontrol eder.\n` +
-                `• /log - Son 5 commit geçmişini getirir.\n` +
-                `• /dosyalar - Proje klasöründeki dosyaları listeler.\n\n` +
-                `🚀 *GİT & YAYINLAMA İŞLEMLERİ*:\n` +
-                `• /gonder [mesaj] - Tüm değişiklikleri commitler ve GitHub'a yükler.\n` +
-                `• /bat - Bilgisayardaki \`gonder.bat\` dosyasını çalıştırır.\n\n` +
-                `📂 *DOSYA YÖNETİMİ*:\n` +
-                `• /oku [dosya] - Belirtilen dosya içeriğini okur (Örn: \`/oku firebase-config.js\`).\n\n` +
-                `ℹ️ Şu anki yetkili Chat ID: \`${ALLOWED_CHAT_ID}\``;
+            const welcomeText = `🚀 *Hermes Bulut AI Yazılım Ajanı* 🐙\n\n` +
+                `Benimle doğrudan Türkçe sohbet ederek GitHub deponuzdaki dosyaları doğrudan uzaktan güncelletebilirsiniz!\n\n` +
+                `*Örnek Talimatlar:*\n` +
+                `• _"user-app.js dosyasında borç eklerken varsayılan faizi 0 yap."_\n` +
+                `• _"styles.css dosyasında arka planı koyu lacivert tonu yap."_\n\n` +
+                `ℹ️ *Bilgisayarınızı açmanıza gerek yoktur.* Tüm değişiklikler doğrudan GitHub API üzerinden deponuza yazılır ve canlı siteniz 1 dakika içinde güncellenir!`;
             
             await sendMessage(chatId, welcomeText);
             break;
 
-        case '/durum':
-            await sendMessage(chatId, `🔍 Git durumu sorgulanıyor, lütfen bekleyin...`);
-            const gitStatus = await runCommand('git status');
-            await sendMessage(chatId, `📦 *Git Durumu Çıktısı:*\n\`\`\`\n${gitStatus.output}\n\`\`\``);
-            break;
-
-        case '/log':
-            await sendMessage(chatId, `📜 Git geçmişi sorgulanıyor...`);
-            const gitLog = await runCommand('git log -n 5 --oneline');
-            await sendMessage(chatId, `📜 *Son 5 Commit:*\n\`\`\`\n${gitLog.output}\n\`\`\``);
-            break;
-
-        case '/dosyalar':
-            fs.readdir(__dirname, async (err, files) => {
-                if (err) {
-                    await sendMessage(chatId, `❌ Klasör listelenirken hata oluştu: ${err.message}`);
-                    return;
-                }
-                const fileList = files
-                    .filter(f => !f.startsWith('.') && f !== 'node_modules')
-                    .map(f => {
-                        const isDir = fs.statSync(path.join(__dirname, f)).isDirectory();
-                        return isDir ? `📂 ${f}/` : `📄 ${f}`;
-                    })
-                    .join('\n');
-                await sendMessage(chatId, `📂 *Proje Dosya Listesi:*\n\n${fileList}`);
-            });
-            break;
-
-        case '/oku':
-            if (!args) {
-                await sendMessage(chatId, `⚠️ Lütfen okumak istediğiniz dosya adını yazın.\nÖrnek: \`/oku firebase-config.js\``);
-                return;
-            }
-            const filePath = path.join(__dirname, args);
-            // Güvenlik: Sadece proje dizini altındaki dosyaların okunmasına izin ver
-            if (!filePath.startsWith(__dirname) || args.includes('..')) {
-                await sendMessage(chatId, `⚠️ Güvenlik gerekçesiyle üst dizinlerdeki dosyaları okuyamazsınız.`);
-                return;
-            }
-
-            if (!fs.existsSync(filePath)) {
-                await sendMessage(chatId, `❌ Dosya bulunamadı: \`${args}\``);
-                return;
-            }
-
-            fs.readFile(filePath, 'utf8', async (err, data) => {
-                if (err) {
-                    await sendMessage(chatId, `❌ Dosya okunurken hata oluştu: ${err.message}`);
-                    return;
-                }
-                
-                // Mesaj limiti kontrolü (4096 karakter)
-                let content = data.length > 3000 ? data.slice(0, 3000) + '\n\n... (Dosya çok büyük olduğu için kesildi)' : data;
-                await sendMessage(chatId, `📄 *Dosya İçeriği (${args}):*\n\`\`\`javascript\n${content}\n\`\`\``);
-            });
-            break;
-
-        case '/gonder':
-            const commitMessage = args || `Telegram guncellemesi - ${new Date().toLocaleString('tr-TR')}`;
-            await sendMessage(chatId, `⚙️ *Değişiklikler GitHub'a gönderiliyor...*\nCommit mesajı: "${commitMessage}"`);
-
-            // Aşama aşama git komutlarını çalıştır
-            const addRes = await runCommand('git add .');
-            if (!addRes.success) {
-                await sendMessage(chatId, `❌ git add başarısız oldu:\n\`${addRes.output}\``);
-                return;
-            }
-
-            const commitRes = await runCommand(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`);
-            await sendMessage(chatId, `📝 *Commit sonucu:*\n\`\`\`\n${commitRes.output}\n\`\`\``);
-
-            await sendMessage(chatId, `📤 GitHub'a yükleniyor (git push)...`);
-            const pushRes = await runCommand('git push origin main');
-            if (pushRes.success) {
-                await sendMessage(chatId, `✅ *Harika! Değişiklikler başarıyla GitHub'a yüklendi.* \n\n1-2 dakika içinde siteniz güncellenecektir:\nhttps://takipyusuf.github.io/hesap/`);
-            } else {
-                await sendMessage(chatId, `❌ *Push başarısız oldu!*\nLütfen Git yapılandırmanızı ve internet bağlantınızı kontrol edin:\n\`\`\`\n${pushRes.output}\n\`\`\``);
-            }
-            break;
-
-        case '/bat':
-            await sendMessage(chatId, `⚙️ \`gonder.bat\` dosyası çalıştırılıyor, lütfen bekleyin...`);
-            const batRes = await runCommand('gonder.bat');
-            await sendMessage(chatId, `🖥️ *Bat Dosyası Çıktısı:*\n\`\`\`\n${batRes.output}\n\`\`\``);
-            break;
-
         default:
             if (text.startsWith('/')) {
-                await sendMessage(chatId, `⚠️ Bilinmeyen komut. Yardım için /yardim yazabilirsiniz.`);
+                await sendMessage(chatId, `⚠️ Bilinmeyen komut. Doğrudan yapmak istediğiniz güncellemeyi yazabilirsiniz.`);
+                return;
+            }
+
+            await sendMessage(chatId, `🧠 *Hermes doğrudan GitHub deponuzu inceliyor...*`);
+
+            // Hangi dosyaların isminin geçtiğini kontrol et
+            const allFiles = ['index.html', 'admin.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin-app.js', 'firebase-config.js'];
+            let filesToLoad = allFiles.filter(f => text.toLowerCase().includes(f.toLowerCase()));
+            
+            // Eğer dosya belirtilmemişse akıllı tahmin yap
+            if (filesToLoad.length === 0) {
+                if (text.toLowerCase().includes('tasarım') || text.toLowerCase().includes('renk') || text.toLowerCase().includes('css') || text.toLowerCase().includes('stil')) {
+                    filesToLoad.push('styles.css');
+                }
+                if (text.toLowerCase().includes('arayüz') || text.toLowerCase().includes('ekran') || text.toLowerCase().includes('kullanıcı')) {
+                    filesToLoad.push('index.html');
+                    filesToLoad.push('user-app.js');
+                }
+                if (text.toLowerCase().includes('yönetici') || text.toLowerCase().includes('admin')) {
+                    filesToLoad.push('admin.html');
+                    filesToLoad.push('admin-app.js');
+                }
+            }
+
+            if (filesToLoad.length === 0) {
+                await sendMessage(chatId, `🤔 *Hangi dosyada değişiklik yapmak istediğinizi anlayamadım.*\n\nLütfen mesajınızda dosya adını belirtin (Örn: \`user-app.js\`, \`styles.css\` veya \`index.html\`).`);
+                return;
+            }
+
+            let context = '';
+            const loadedFilesMeta = {};
+
+            // GitHub'dan dosyaların en güncel halini API üzerinden çekelim
+            for (const file of filesToLoad) {
+                try {
+                    await sendMessage(chatId, `📥 *${file}* dosyası GitHub'dan indiriliyor...`);
+                    const fileData = await fetchFileFromGithub(file);
+                    loadedFilesMeta[file] = fileData; // sha ve content sakla
+                    context += `\n\n--- DOSYA İÇERİĞİ: ${file} ---\n${fileData.content}\n------------------------`;
+                } catch (e) {
+                    await sendMessage(chatId, `❌ *${file}* dosyası GitHub'dan çekilirken hata oluştu. Lütfen dosya adının depoda var olduğundan emin olun.`);
+                    return;
+                }
+            }
+
+            const fullPrompt = `${text}\n\n${context ? `Aşağıda istenen değişiklik için GitHub deponuzdaki ilgili dosyaların güncel içerikleri verilmiştir:${context}` : ''}`;
+
+            try {
+                await sendMessage(chatId, `⚙️ *Yapay zeka değişiklik kodlarını üretiyor...*`);
+                const aiResponse = await askGemini(fullPrompt);
+
+                // Kod düzenleme Regex'i
+                const editRegex = /<<<EDIT_FILE:\s*([a-zA-Z0-9_\-\.]+)\s*>>>[\s\S]*?<<<SEARCH>>>([\s\S]*?)<<<REPLACE>>>([\s\S]*?)<<<END>>>/g;
+                let match;
+                let appliedCount = 0;
+                let cleanResponse = aiResponse.replace(/<<<EDIT_FILE:[\s\S]*?<<<END>>>/g, '').trim();
+
+                // Tüm eşleşmeleri dönelim ve doğrudan GitHub'a pushlayalım
+                while ((match = editRegex.exec(aiResponse)) !== null) {
+                    const fileName = match[1].trim();
+                    const searchContent = match[2];
+                    const replaceContent = match[3];
+
+                    const meta = loadedFilesMeta[fileName];
+                    if (!meta) continue;
+
+                    let fileContent = meta.content;
+                    if (!fileContent.includes(searchContent)) {
+                        await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
+                        continue;
+                    }
+
+                    const newContent = fileContent.replace(searchContent, replaceContent);
+                    const commitMsg = `Hermes AI: ${text.slice(0, 50)}...`;
+
+                    await sendMessage(chatId, `📤 *${fileName}* doğrudan GitHub'a pushlanıyor...`);
+                    await commitFileToGithub(fileName, newContent, meta.sha, commitMsg);
+                    appliedCount++;
+                }
+
+                if (appliedCount > 0) {
+                    await sendMessage(chatId, `${cleanResponse}\n\n🎉 *BAŞARILI!* Değişiklikler doğrudan GitHub deponuza yüklendi.\n\nSiteniz 1-2 dakika içinde güncellenmiş olacaktır:\nhttps://takipyusuf.github.io/hesap/`);
+                } else {
+                    await sendMessage(chatId, aiResponse);
+                }
+
+            } catch (err) {
+                console.error("Bulut AI Hatası:", err);
+                await sendMessage(chatId, `❌ *İşlem Başarısız Oldu!*\nHata Detayı: \`${err.message || err}\``);
             }
             break;
     }
@@ -265,38 +408,19 @@ async function pollUpdates() {
             }
         }
     } catch (err) {
-        if (err.code === 'BOT_TOKEN_MISSING') {
-            process.exit(1);
-        }
-        console.error("🔄 Polling Hatası (Yeniden deneniyor...):", err.message || err);
-        // Hata durumunda 5 saniye bekle ve devam et
+        console.error("🔄 Polling Hatası:", err.message || err);
         await new Promise(r => setTimeout(r, 5000));
     }
-
-    // Anında yeni istek gönder (Long Polling)
     setTimeout(pollUpdates, 1000);
 }
 
 // ==========================================
 // 🚀 BOT BAŞLANGICI
 // ==========================================
-
 console.log("==========================================");
-console.log("🚀 HESAP TAKİP TELEGRAM BOTU BAŞLATILIYOR");
+console.log("🚀 HERMES BULUT GITHUB AI AJANI BOTU AKTİF");
 console.log("==========================================");
-
-if (!BOT_TOKEN || BOT_TOKEN === 'BURAYA_BOT_TOKEN_YAZIN') {
-    console.log("❌ HATA: Bot Token bulunamadı!");
-    console.log("👉 Lütfen BotFather'dan aldığınız tokeni telegram-bot.js dosyasındaki BOT_TOKEN kısmına yazın.");
-    process.exit(1);
-}
-
 console.log("🤖 Telegram Bot Polling Başladı...");
-console.log("💡 İpucu: Botunuza Telegram'dan /start yazarak testi başlatın.");
-if (!ALLOWED_CHAT_ID) {
-    console.log("🔑 Güvenlik Koruması: KAPALI (İlk bağlantıda Chat ID'niz otomatik tespit edilecek).");
-} else {
-    console.log(`🔒 Güvenlik Koruması: AKTİF (Sadece Chat ID '${ALLOWED_CHAT_ID}' komut çalıştırabilir).`);
-}
+console.log(`🔒 Güvenlik Koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
 
 pollUpdates();
