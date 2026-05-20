@@ -249,7 +249,9 @@ function askGemini(promptText, systemInstruction = SYSTEM_PROMPT) {
                     if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
                         resolve(data.candidates[0].content.parts[0].text);
                     } else {
-                        reject(new Error("Yapay zekadan geçersiz yanıt geldi."));
+                        const errMsg = data.error ? data.error.message : "Bilinmeyen Google API Hatası";
+                        console.error("Gemini API Error Detail:", body);
+                        reject(new Error(`Google Gemini Hatası: ${errMsg} (Status: ${res.statusCode})`));
                     }
                 } catch (e) { reject(e); }
             });
