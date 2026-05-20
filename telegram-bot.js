@@ -307,22 +307,41 @@ async function handleMessage(message) {
             
             // Eğer dosya belirtilmemişse akıllı tahmin yap
             if (filesToLoad.length === 0) {
-                if (text.toLowerCase().includes('tasarım') || text.toLowerCase().includes('renk') || text.toLowerCase().includes('css') || text.toLowerCase().includes('stil')) {
+                const lowerText = text.toLowerCase();
+                
+                // CSS ve Stil ile ilgili geniş anahtar kelimeler (Türkçe yumuşama desteği ile: renk -> renge, rengi)
+                if (lowerText.includes('tasarım') || lowerText.includes('renk') || lowerText.includes('reng') || 
+                    lowerText.includes('css') || lowerText.includes('stil') || lowerText.includes('tema') || 
+                    lowerText.includes('koyu') || lowerText.includes('açık') || lowerText.includes('görünüm') || 
+                    lowerText.includes('arka plan') || lowerText.includes('arkaplan') || lowerText.includes('font') || 
+                    lowerText.includes('buton') || lowerText.includes('düğme') || lowerText.includes('hizala') ||
+                    lowerText.includes('şık') || lowerText.includes('modern') || lowerText.includes('visual')) {
                     filesToLoad.push('styles.css');
                 }
-                if (text.toLowerCase().includes('arayüz') || text.toLowerCase().includes('ekran') || text.toLowerCase().includes('kullanıcı')) {
+                
+                // Kullanıcı Uygulaması ve Borç İşlemleri ile ilgili geniş anahtar kelimeler
+                if (lowerText.includes('arayüz') || lowerText.includes('ekran') || lowerText.includes('kullanıcı') || 
+                    lowerText.includes('borç') || lowerText.includes('faiz') || lowerText.includes('taksit') || 
+                    lowerText.includes('ödeme') || lowerText.includes('hesap') || lowerText.includes('ana sayfa') || 
+                    lowerText.includes('giriş') || lowerText.includes('kayıt') || lowerText.includes('müşteri') ||
+                    lowerText.includes('ekle') || lowerText.includes('sil') || lowerText.includes('güncelle')) {
                     filesToLoad.push('index.html');
                     filesToLoad.push('user-app.js');
                 }
-                if (text.toLowerCase().includes('yönetici') || text.toLowerCase().includes('admin')) {
+                
+                // Yönetici Paneli ile ilgili geniş anahtar kelimeler
+                if (lowerText.includes('yönetici') || lowerText.includes('admin') || lowerText.includes('panel') || 
+                    lowerText.includes('dashboard') || lowerText.includes('tüm') || lowerText.includes('aktivite') || 
+                    lowerText.includes('log')) {
                     filesToLoad.push('admin.html');
                     filesToLoad.push('admin-app.js');
                 }
             }
 
+            // 🌟 AKILLI VARSAYILAN DESTEĞİ: Eğer hiçbir dosya eşleşmediyse, hata vermek yerine 
+            // en kritik ana dosyaları (index, styles, user-app) varsayılan olarak yükle ki yapay zeka karar verebilsin!
             if (filesToLoad.length === 0) {
-                await sendMessage(chatId, `🤔 *Hangi dosyada değişiklik yapmak istediğinizi anlayamadım.*\n\nLütfen mesajınızda dosya adını belirtin (Örn: \`user-app.js\`, \`styles.css\` veya \`index.html\`).`);
-                return;
+                filesToLoad = ['index.html', 'styles.css', 'user-app.js'];
             }
 
             let context = '';
