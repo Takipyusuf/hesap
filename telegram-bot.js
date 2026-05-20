@@ -293,7 +293,7 @@ async function handleMessage(message) {
                 `• _"user-app.js dosyasında borç eklerken varsayılan faizi 0 yap."_\n` +
                 `• _"styles.css dosyasında arka planı koyu lacivert tonu yap."_\n\n` +
                 `ℹ️ *Bilgisayarınızı açmanıza gerek yoktur.* Tüm değişiklikler doğrudan GitHub API üzerinden deponuza yazılır ve canlı siteniz 1 dakika içinde güncellenir!`;
-            
+
             await sendMessage(chatId, welcomeText);
             break;
 
@@ -308,34 +308,34 @@ async function handleMessage(message) {
             // Hangi dosyaların isminin geçtiğini kontrol et
             const allFiles = ['index.html', 'admin.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin-app.js', 'firebase-config.js'];
             let filesToLoad = allFiles.filter(f => text.toLowerCase().includes(f.toLowerCase()));
-            
+
             // Eğer dosya belirtilmemişse akıllı tahmin yap
             if (filesToLoad.length === 0) {
                 const lowerText = text.toLowerCase();
-                
+
                 // CSS ve Stil ile ilgili geniş anahtar kelimeler (Türkçe yumuşama desteği ile: renk -> renge, rengi)
-                if (lowerText.includes('tasarım') || lowerText.includes('renk') || lowerText.includes('reng') || 
-                    lowerText.includes('css') || lowerText.includes('stil') || lowerText.includes('tema') || 
-                    lowerText.includes('koyu') || lowerText.includes('açık') || lowerText.includes('görünüm') || 
-                    lowerText.includes('arka plan') || lowerText.includes('arkaplan') || lowerText.includes('font') || 
+                if (lowerText.includes('tasarım') || lowerText.includes('renk') || lowerText.includes('reng') ||
+                    lowerText.includes('css') || lowerText.includes('stil') || lowerText.includes('tema') ||
+                    lowerText.includes('koyu') || lowerText.includes('açık') || lowerText.includes('görünüm') ||
+                    lowerText.includes('arka plan') || lowerText.includes('arkaplan') || lowerText.includes('font') ||
                     lowerText.includes('buton') || lowerText.includes('düğme') || lowerText.includes('hizala') ||
                     lowerText.includes('şık') || lowerText.includes('modern') || lowerText.includes('visual')) {
                     filesToLoad.push('styles.css');
                 }
-                
+
                 // Kullanıcı Uygulaması ve Borç İşlemleri ile ilgili geniş anahtar kelimeler
-                if (lowerText.includes('arayüz') || lowerText.includes('ekran') || lowerText.includes('kullanıcı') || 
-                    lowerText.includes('borç') || lowerText.includes('faiz') || lowerText.includes('taksit') || 
-                    lowerText.includes('ödeme') || lowerText.includes('hesap') || lowerText.includes('ana sayfa') || 
+                if (lowerText.includes('arayüz') || lowerText.includes('ekran') || lowerText.includes('kullanıcı') ||
+                    lowerText.includes('borç') || lowerText.includes('faiz') || lowerText.includes('taksit') ||
+                    lowerText.includes('ödeme') || lowerText.includes('hesap') || lowerText.includes('ana sayfa') ||
                     lowerText.includes('giriş') || lowerText.includes('kayıt') || lowerText.includes('müşteri') ||
                     lowerText.includes('ekle') || lowerText.includes('sil') || lowerText.includes('güncelle')) {
                     filesToLoad.push('index.html');
                     filesToLoad.push('user-app.js');
                 }
-                
+
                 // Yönetici Paneli ile ilgili geniş anahtar kelimeler
-                if (lowerText.includes('yönetici') || lowerText.includes('admin') || lowerText.includes('panel') || 
-                    lowerText.includes('dashboard') || lowerText.includes('tüm') || lowerText.includes('aktivite') || 
+                if (lowerText.includes('yönetici') || lowerText.includes('admin') || lowerText.includes('panel') ||
+                    lowerText.includes('dashboard') || lowerText.includes('tüm') || lowerText.includes('aktivite') ||
                     lowerText.includes('log')) {
                     filesToLoad.push('admin.html');
                     filesToLoad.push('admin-app.js');
