@@ -60,8 +60,12 @@ Eğer bir dosyada değişiklik yapman veya yeni kod eklemen gerekirse, cevabın�
 
 let lastUpdateId = 0;
 
-// firebase-config.js içeriğinden Gemini API anahtarını yerel veya GitHub'dan çeken fonksiyon
+// firebase-config.js içeriğinden veya Environment'tan Gemini API anahtarını alan fonksiyon
 function getGeminiApiKey() {
+    // ⚠️ GÜVENLİK: Eğer Render Environment Variable üzerinde GEMINI_API_KEY tanımlıysa doğrudan onu kullan!
+    if (process.env.GEMINI_API_KEY) {
+        return process.env.GEMINI_API_KEY;
+    }
     try {
         const configPath = path.join(__dirname, 'firebase-config.js');
         if (fs.existsSync(configPath)) {
