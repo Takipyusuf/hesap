@@ -376,26 +376,42 @@ async function handleMessage(message) {
                 let appliedCount = 0;
                 let cleanResponse = aiResponse.replace(/<<<EDIT_FILE:[\s\S]*?<<<END>>>/g, '').trim();
 
-                // Tüm eşleşmeleri dönelim ve doğrudan GitHub'a pushlayalım
+                // Tüm eşleşmeleri dosyalara göre gruplayalım
+                const pendingEdits = {}; // fileName -> [{ searchContent, replaceContent }]
                 while ((match = editRegex.exec(aiResponse)) !== null) {
                     const fileName = match[1].trim();
                     const searchContent = match[2];
                     const replaceContent = match[3];
 
+                    if (!pendingEdits[fileName]) {
+                        pendingEdits[fileName] = [];
+                    }
+                    pendingEdits[fileName].push({ searchContent, replaceContent });
+                }
+
+                // Gruplanmış değişiklikleri sırayla uygulayıp tek seferde pushlayalım
+                for (const fileName of Object.keys(pendingEdits)) {
                     const meta = loadedFilesMeta[fileName];
                     if (!meta) continue;
 
                     let fileContent = meta.content;
-                    if (!fileContent.includes(searchContent)) {
-                        await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
-                        continue;
+                    let fileSuccess = true;
+
+                    for (const edit of pendingEdits[fileName]) {
+                        if (!fileContent.includes(edit.searchContent)) {
+                            await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
+                            fileSuccess = false;
+                            break;
+                        }
+                        fileContent = fileContent.replace(edit.searchContent, edit.replaceContent);
                     }
 
-                    const newContent = fileContent.replace(searchContent, replaceContent);
+                    if (!fileSuccess) continue;
+
                     const commitMsg = `Hermes AI: ${text.slice(0, 50)}...`;
 
                     await sendMessage(chatId, `📤 *${fileName}* doğrudan GitHub'a pushlanıyor...`);
-                    await commitFileToGithub(fileName, newContent, meta.sha, commitMsg);
+                    await commitFileToGithub(fileName, fileContent, meta.sha, commitMsg);
                     appliedCount++;
                 }
 
