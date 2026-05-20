@@ -455,23 +455,42 @@ async function pollUpdates() {
     setTimeout(pollUpdates, 1000);
 }
 
-// ==========================================
-// 🚀 BOT BAŞLANGICI
-// ==========================================
-console.log("==========================================");
-console.log("🚀 HERMES BULUT GITHUB AI AJANI BOTU AKTİF");
-console.log("==========================================");
-console.log("🤖 Telegram Bot Polling Başladı...");
-console.log(`🔒 Güvenlik Koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
+// En son update_id'yi alıp eski birikmiş mesajları yoksaymak için startup'ta bir kez çalıştırıyoruz
+async function initializeLastUpdateId() {
+    try {
+        const updates = await telegramRequest('getUpdates', {
+            offset: -1,
+            limit: 1
+        });
+        if (updates && updates.length > 0) {
+            lastUpdateId = updates[0].update_id;
+            console.log(`🤖 Eski birikmiş mesajlar yoksayıldı. Dinleme ID'si: ${lastUpdateId}`);
+        }
+    } catch (err) {
+        console.error("LastUpdateId ilklendirme hatası:", err.message);
+    }
+}
 
-// 📡 Render.com Port Tarama Uyum Kodu (Dummy HTTP Server)
-// Render Web Servisleri bir port dinlenmesini zorunlu kılar.
-const PORT = process.env.PORT || 10000;
-require('http').createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Hermes Bot Aktif ve Çalışıyor!\n');
-}).listen(PORT, () => {
-    console.log(`📡 Render için Port Dinleniyor: ${PORT}`);
-});
+async function startBot() {
+    console.log("==========================================");
+    console.log("🚀 HERMES BULUT GITHUB AI AJANI BOTU AKTİF");
+    console.log("==========================================");
+    console.log("🤖 Telegram Bot Polling Başlatılıyor...");
+    console.log(`🔒 Güvenlik Koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
 
-pollUpdates();
+    // 📡 Render.com Port Tarama Uyum Kodu (Dummy HTTP Server)
+    // Render Web Servisleri bir port dinlenmesini zorunlu kılar.
+    const PORT = process.env.PORT || 10000;
+    require('http').createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Hermes Bot Aktif ve Çalışıyor!\n');
+    }).listen(PORT, () => {
+        console.log(`📡 Render için Port Dinleniyor: ${PORT}`);
+    });
+
+    await initializeLastUpdateId();
+    pollUpdates();
+    console.log("🤖 Telegram Bot Polling Başladı...");
+}
+
+startBot();
