@@ -442,4 +442,14 @@ console.log("==========================================");
 console.log("🤖 Telegram Bot Polling Başladı...");
 console.log(`🔒 Güvenlik Koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
 
+// 📡 Render.com Port Tarama Uyum Kodu (Dummy HTTP Server)
+// Render Web Servisleri bir port dinlenmesini zorunlu kılar.
+const PORT = process.env.PORT || 10000;
+require('http').createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Hermes Bot Aktif ve Çalışıyor!\n');
+}).listen(PORT, () => {
+    console.log(`📡 Render için Port Dinleniyor: ${PORT}`);
+});
+
 pollUpdates();
