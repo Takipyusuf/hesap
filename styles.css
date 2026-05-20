@@ -2,26 +2,26 @@
    ANADİZİN DEĞİŞKENLERİ & TEMA AYARLARI
    ========================================== */
 :root {
-    --bg: #0b0f19;
-    --bg-elevated: rgba(26, 35, 50, 0.65);
-    --card: rgba(30, 42, 58, 0.5);
-    --card-hover: rgba(36, 52, 71, 0.7);
-    --border: rgba(255, 255, 255, 0.06);
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
+    --bg: #f0f2f5; /* Açık arka plan */
+    --bg-elevated: rgba(255, 255, 255, 0.8); /* Yükseltilmiş açık arka plan */
+    --card: rgba(255, 255, 255, 0.9); /* Açık kart arka planı */
+    --card-hover: rgba(240, 242, 245, 0.95); /* Açık kart hover durumu */
+    --border: rgba(0, 0, 0, 0.08); /* Açık tema için daha koyu kenarlık */
+    --text: #1a202c; /* Koyu metin */
+    --text-muted: #64748b; /* Daha açık soluk metin */
     --primary: #3b82f6;
     --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    --primary-dim: rgba(59, 130, 246, 0.15);
+    --primary-dim: rgba(59, 130, 246, 0.1); /* Açık tema için daha hafif dim */
     --success: #10b981;
-    --success-dim: rgba(16, 185, 129, 0.15);
+    --success-dim: rgba(16, 185, 129, 0.1);
     --warning: #f59e0b;
-    --warning-dim: rgba(245, 158, 11, 0.15);
+    --warning-dim: rgba(245, 158, 11, 0.1);
     --danger: #ef4444;
-    --danger-dim: rgba(239, 68, 68, 0.15);
+    --danger-dim: rgba(239, 68, 68, 0.1);
     --admin: #a855f7;
-    --admin-dim: rgba(168, 85, 247, 0.15);
+    --admin-dim: rgba(168, 85, 247, 0.1);
     --radius: 16px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.1); /* Açık tema için daha hafif gölge */
 }
 
 /* ==========================================
