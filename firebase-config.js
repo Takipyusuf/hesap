@@ -11,7 +11,7 @@ var FIREBASE_CONFIG = {
 
 // Antigravity AI (Google Gemini) Yapılandırma Değişkeni
 var ANTIGRAVITY_CONFIG = {
-  apiKey: "AIzaSyDPvBn1_0Zk0urb1CadhsiN5RzOILblcGM"
+  apiKey: "AIzaSyBB1RovbpN4eO3Ml8XMGsR1u564gHJ8o50"
 };
 
 // Ne olur ne olmaz, küçük harfli halini de arkada tanımlı bırakalım
