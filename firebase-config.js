@@ -6,12 +6,13 @@ var FIREBASE_CONFIG = {
   storageBucket: "hesaptakip-b9159.firebasestorage.app",
   messagingSenderId: "312655912552",
   appId: "1:312655912552:web:d033021544e2e410f3e5dd",
-  measurementId: "G-KTWLKB9JZ0"
+  measurementId: "G-KTWLKB9JZ0",
+  adminEmail: "adminyusuf@gmail.com"
 };
 
 // Antigravity AI (Google Gemini) Yapılandırma Değişkeni
 var ANTIGRAVITY_CONFIG = {
-  apiKey: "AIzaSyBB1RovbpN4eO3Ml8XMGsR1u564gHJ8o50"
+  apiKey: ""
 };
 
 // Ne olur ne olmaz, küçük harfli halini de arkada tanımlı bırakalım
