@@ -256,7 +256,7 @@ body::before {
     background: rgba(15, 23, 42, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    color: var(--text);
+    color: white; /* Changed for better contrast on dark background */
     font-size: 0.95rem;
     margin-bottom: 0;
     outline: none;
@@ -334,13 +334,13 @@ body::before {
    ========================================== */
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="month"], select {
     width: 100%;
-    padding: 12px 14px;
+    padding: 10px 14px; /* Reduced vertical padding slightly for better form consistency */
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text);
     font-size: 0.95rem;
-    margin-bottom: 12px;
+    margin-bottom: 10px; /* Reduced margin-bottom slightly */
     outline: none;
     font-family: inherit;
 }
@@ -982,7 +982,16 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 .budget-input-group {
     display: flex;
     gap: 10px;
-    align-items: center; /* Buton ve input'u ortala */
+    align-items: center;
+}
+@media (max-width: 480px) { /* Stack input and button vertically on small screens */
+    .budget-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .budget-input-group input, .budget-input-group .btn {
+        width: 100%;
+    }
 }
 
 .budget-input-group input {
@@ -1110,6 +1119,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
     display: inline-block;
     box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255,255,255,0.05); /* Daha belirgin gölge */
     animation: pulseWarning 2s infinite alternate ease-in-out;
+    word-break: break-word; /* Allow text to break to prevent overflow */
 }
 
 @keyframes pulseWarning {
@@ -1186,7 +1196,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
     .form-grid { grid-template-columns: 1fr; gap: 12px; }
     .btn { padding: 14px; font-size: 0.95rem; }
     
-    th, td { white-space: nowrap; font-size: 0.85rem; padding: 12px 10px; }
+    th, td { font-size: 0.85rem; padding: 12px 10px; } /* Removed white-space: nowrap to allow content wrapping in tables */
     .row-actions { display: flex; flex-direction: row; flex-wrap: nowrap; }
     .row-actions .btn-sm { flex: 1; padding: 10px; justify-content: center; }
     
