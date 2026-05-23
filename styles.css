@@ -511,6 +511,7 @@ header h1 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: cen
 }
 
 .stat-card.debt .stat-icon { background: var(--danger-dim); color: var(--danger); }
+.stat-card.debt .stat-value { color: var(--danger); }
 .stat-card.month .stat-icon { background: var(--warning-dim); color: var(--warning); }
 .stat-card.paid .stat-icon { background: var(--success-dim); color: var(--success); }
 .stat-card.count .stat-icon { background: var(--primary-dim); color: var(--primary); }
