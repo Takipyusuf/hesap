@@ -886,7 +886,9 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 .budget-input-group input {
     flex: 1;
     margin-bottom: 0;
-    padding: 14px 16px; /* Daha dolgun padding */
+    min-width: 120px; /* Minimum genişlik ekleyerek alanın çok küçülmesini engeller */
+    padding: 16px 20px; /* Dikey ve yatay padding artırılarak daha büyük bir alan sağlanır */
+    font-size: 1.05rem; /* Font boyutu biraz artırılır */
     background: rgba(15, 23, 42, 0.65); /* Daha belirgin arka plan */
     border: 1px solid rgba(59, 130, 246, 0.3); /* Belirgin border */
     border-radius: 12px;
