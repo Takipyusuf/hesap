@@ -99,12 +99,16 @@
                     <h2 class="section-title"><i class="fa-solid fa-user"></i> <span id="detail-title">Kullanıcı seçin</span></h2>
                     <p id="detail-email" style="color:var(--text-muted);margin-bottom:16px;font-size:0.9rem;"></p>
 
-                    <h3 style="font-size:0.9rem;margin-bottom:8px;color:var(--text-muted);">BORÇLAR</h3>
+                    <h3 class="section-subtitle"><i class="fa-solid fa-credit-card"></i> BORÇLAR</h3>
                     <div class="table-wrap">
-                        <table>
+                        <table id="detail-debts-table">
                             <thead><tr><th>Banka</th><th>İlk</th><th>Faiz</th><th>Taksit</th><th>Kalan</th></tr></thead>
-                            <tbody id="detail-debts"></tbody>
+                            <tbody id="detail-debts-body"></tbody>
                         </table>
+                        <div id="detail-debts-empty" class="empty-state" style="display:none;">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                            <p>Bu kullanıcının henüz aktif bir borcu bulunmamaktadır.</p>
+                        </div>
                     </div>
 
                     <h3 style="font-size:0.9rem;margin:20px 0 8px;color:var(--text-muted);">ÖDEMELER</h3>
