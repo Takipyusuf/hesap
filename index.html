@@ -287,10 +287,16 @@
         <section class="panel" id="panel-ayarlar">
             <div class="section">
                 <h2 class="section-title"><i class="fa-solid fa-user-gear"></i> Şifre Değiştir</h2>
-                <input type="password" id="old-password" placeholder="Mevcut şifre">
-                <input type="password" id="new-password" placeholder="Yeni şifre">
-                <input type="password" id="new-password-confirm" placeholder="Yeni şifre tekrar">
-                <button class="btn btn-primary" id="change-password-btn" style="margin-top:8px;">Güncelle</button>
+                <label>Mevcut Şifre
+                    <input type="password" id="old-password" placeholder="Mevcut şifre">
+                </label>
+                <label>Yeni Şifre
+                    <input type="password" id="new-password" placeholder="Yeni şifre">
+                </label>
+                <label>Yeni Şifre Tekrar
+                    <input type="password" id="new-password-confirm" placeholder="Yeni şifre tekrar">
+                </label>
+                <button class="btn btn-primary" id="change-password-btn">Güncelle</button>
                 <p id="password-msg" class="msg-success"></p>
             </div>
         </section>
