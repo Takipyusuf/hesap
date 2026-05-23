@@ -14,12 +14,12 @@ const path = require('path');
 // ⚙️ YAPILANDIRMA AYARLARI
 // ==========================================
 // 1. Telegram Ayarları
-const BOT_TOKEN = process.env.BOT_TOKEN || '8883186345:AAEZAsVJ0Bk_0JKnCR9SL82s_nJynN-Ru6U';
-const ALLOWED_CHAT_ID = process.env.ALLOWED_CHAT_ID || '8995151756';
+const BOT_TOKEN = '';
+const ALLOWED_CHAT_ID = '';
 
 // 2. GitHub Ayarları (Canlı deponuzu uzaktan düzenlemek için)
-// ⚠️ GÜVENLİK: GitHub'ın tokeni iptal etmemesi için tokeni Render'ın "Environment Variables" kısmına kaydedeceğiz.
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || 'BURAYA_KENDI_TOKENINIZI_YAZABILIRSINIZ';
+// ⚠️ ÖNEMLİ: Aşağıdaki GITHUB_TOKEN alanına GitHub'dan aldığınız erişim anahtarını (PAT) yazmalısınız.
+const GITHUB_TOKEN = '';
 const GITHUB_OWNER = 'Takipyusuf';
 const GITHUB_REPO = 'hesap';
 const GITHUB_BRANCH = 'main';
@@ -60,12 +60,8 @@ Eğer bir dosyada değişiklik yapman veya yeni kod eklemen gerekirse, cevabın�
 
 let lastUpdateId = 0;
 
-// firebase-config.js içeriğinden veya Environment'tan Gemini API anahtarını alan fonksiyon
+// firebase-config.js içeriğinden Gemini API anahtarını yerel veya GitHub'dan çeken fonksiyon
 function getGeminiApiKey() {
-    // ⚠️ GÜVENLİK: Eğer Render Environment Variable üzerinde GEMINI_API_KEY tanımlıysa doğrudan onu kullan!
-    if (process.env.GEMINI_API_KEY) {
-        return process.env.GEMINI_API_KEY;
-    }
     try {
         const configPath = path.join(__dirname, 'firebase-config.js');
         if (fs.existsSync(configPath)) {
@@ -77,8 +73,7 @@ function getGeminiApiKey() {
         console.error("Yerel API Key okuma hatası (Bulut modunda GitHub'dan çekilecek):", e.message);
     }
     // Varsayılan anahtarı döndür veya GitHub içeriğinden dinamik çekecek şekilde yedekle
-    return 'AIzaSyBB1RovbpN4eO3Ml8XMGsR1u564gHJ8o50';
-}
+return '';}
 
 // Telegram API'sine istek gönderen ortak fonksiyon
 function telegramRequest(method, data = {}) {
@@ -249,9 +244,7 @@ function askGemini(promptText, systemInstruction = SYSTEM_PROMPT) {
                     if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
                         resolve(data.candidates[0].content.parts[0].text);
                     } else {
-                        const errMsg = data.error ? data.error.message : "Bilinmeyen Google API Hatası";
-                        console.error("Gemini API Error Detail:", body);
-                        reject(new Error(`Google Gemini Hatası: ${errMsg} (Status: ${res.statusCode})`));
+                        reject(new Error("Yapay zekadan geçersiz yanıt geldi."));
                     }
                 } catch (e) { reject(e); }
             });
@@ -295,7 +288,7 @@ async function handleMessage(message) {
                 `• _"user-app.js dosyasında borç eklerken varsayılan faizi 0 yap."_\n` +
                 `• _"styles.css dosyasında arka planı koyu lacivert tonu yap."_\n\n` +
                 `ℹ️ *Bilgisayarınızı açmanıza gerek yoktur.* Tüm değişiklikler doğrudan GitHub API üzerinden deponuza yazılır ve canlı siteniz 1 dakika içinde güncellenir!`;
-
+            
             await sendMessage(chatId, welcomeText);
             break;
 
@@ -310,44 +303,25 @@ async function handleMessage(message) {
             // Hangi dosyaların isminin geçtiğini kontrol et
             const allFiles = ['index.html', 'admin.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin-app.js', 'firebase-config.js'];
             let filesToLoad = allFiles.filter(f => text.toLowerCase().includes(f.toLowerCase()));
-
+            
             // Eğer dosya belirtilmemişse akıllı tahmin yap
             if (filesToLoad.length === 0) {
-                const lowerText = text.toLowerCase();
-
-                // CSS ve Stil ile ilgili geniş anahtar kelimeler (Türkçe yumuşama desteği ile: renk -> renge, rengi)
-                if (lowerText.includes('tasarım') || lowerText.includes('renk') || lowerText.includes('reng') ||
-                    lowerText.includes('css') || lowerText.includes('stil') || lowerText.includes('tema') ||
-                    lowerText.includes('koyu') || lowerText.includes('açık') || lowerText.includes('görünüm') ||
-                    lowerText.includes('arka plan') || lowerText.includes('arkaplan') || lowerText.includes('font') ||
-                    lowerText.includes('buton') || lowerText.includes('düğme') || lowerText.includes('hizala') ||
-                    lowerText.includes('şık') || lowerText.includes('modern') || lowerText.includes('visual')) {
+                if (text.toLowerCase().includes('tasarım') || text.toLowerCase().includes('renk') || text.toLowerCase().includes('css') || text.toLowerCase().includes('stil')) {
                     filesToLoad.push('styles.css');
                 }
-
-                // Kullanıcı Uygulaması ve Borç İşlemleri ile ilgili geniş anahtar kelimeler
-                if (lowerText.includes('arayüz') || lowerText.includes('ekran') || lowerText.includes('kullanıcı') ||
-                    lowerText.includes('borç') || lowerText.includes('faiz') || lowerText.includes('taksit') ||
-                    lowerText.includes('ödeme') || lowerText.includes('hesap') || lowerText.includes('ana sayfa') ||
-                    lowerText.includes('giriş') || lowerText.includes('kayıt') || lowerText.includes('müşteri') ||
-                    lowerText.includes('ekle') || lowerText.includes('sil') || lowerText.includes('güncelle')) {
+                if (text.toLowerCase().includes('arayüz') || text.toLowerCase().includes('ekran') || text.toLowerCase().includes('kullanıcı')) {
                     filesToLoad.push('index.html');
                     filesToLoad.push('user-app.js');
                 }
-
-                // Yönetici Paneli ile ilgili geniş anahtar kelimeler
-                if (lowerText.includes('yönetici') || lowerText.includes('admin') || lowerText.includes('panel') ||
-                    lowerText.includes('dashboard') || lowerText.includes('tüm') || lowerText.includes('aktivite') ||
-                    lowerText.includes('log')) {
+                if (text.toLowerCase().includes('yönetici') || text.toLowerCase().includes('admin')) {
                     filesToLoad.push('admin.html');
                     filesToLoad.push('admin-app.js');
                 }
             }
 
-            // 🌟 AKILLI VARSAYILAN DESTEĞİ: Eğer hiçbir dosya eşleşmediyse, hata vermek yerine 
-            // en kritik ana dosyaları (index, styles, user-app) varsayılan olarak yükle ki yapay zeka karar verebilsin!
             if (filesToLoad.length === 0) {
-                filesToLoad = ['index.html', 'styles.css', 'user-app.js'];
+                await sendMessage(chatId, `🤔 *Hangi dosyada değişiklik yapmak istediğinizi anlayamadım.*\n\nLütfen mesajınızda dosya adını belirtin (Örn: \`user-app.js\`, \`styles.css\` veya \`index.html\`).`);
+                return;
             }
 
             let context = '';
@@ -378,42 +352,26 @@ async function handleMessage(message) {
                 let appliedCount = 0;
                 let cleanResponse = aiResponse.replace(/<<<EDIT_FILE:[\s\S]*?<<<END>>>/g, '').trim();
 
-                // Tüm eşleşmeleri dosyalara göre gruplayalım
-                const pendingEdits = {}; // fileName -> [{ searchContent, replaceContent }]
+                // Tüm eşleşmeleri dönelim ve doğrudan GitHub'a pushlayalım
                 while ((match = editRegex.exec(aiResponse)) !== null) {
                     const fileName = match[1].trim();
                     const searchContent = match[2];
                     const replaceContent = match[3];
 
-                    if (!pendingEdits[fileName]) {
-                        pendingEdits[fileName] = [];
-                    }
-                    pendingEdits[fileName].push({ searchContent, replaceContent });
-                }
-
-                // Gruplanmış değişiklikleri sırayla uygulayıp tek seferde pushlayalım
-                for (const fileName of Object.keys(pendingEdits)) {
                     const meta = loadedFilesMeta[fileName];
                     if (!meta) continue;
 
                     let fileContent = meta.content;
-                    let fileSuccess = true;
-
-                    for (const edit of pendingEdits[fileName]) {
-                        if (!fileContent.includes(edit.searchContent)) {
-                            await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
-                            fileSuccess = false;
-                            break;
-                        }
-                        fileContent = fileContent.replace(edit.searchContent, edit.replaceContent);
+                    if (!fileContent.includes(searchContent)) {
+                        await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
+                        continue;
                     }
 
-                    if (!fileSuccess) continue;
-
+                    const newContent = fileContent.replace(searchContent, replaceContent);
                     const commitMsg = `Hermes AI: ${text.slice(0, 50)}...`;
 
                     await sendMessage(chatId, `📤 *${fileName}* doğrudan GitHub'a pushlanıyor...`);
-                    await commitFileToGithub(fileName, fileContent, meta.sha, commitMsg);
+                    await commitFileToGithub(fileName, newContent, meta.sha, commitMsg);
                     appliedCount++;
                 }
 
@@ -449,48 +407,33 @@ async function pollUpdates() {
             }
         }
     } catch (err) {
-        console.error("🔄 Polling Hatası:", err.message || err);
-        await new Promise(r => setTimeout(r, 5000));
+        const errorDesc = err.description || err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
+        console.error("🔄 Polling Hatası:", errorDesc);
+        
+        // Eğer token yetkisiz (401) ise döngüyü tamamen durdurarak spamı önle
+        if (err.error_code === 401) {
+            console.error("❌ HATA: Telegram Bot Token (BOT_TOKEN) geçersiz! Polling durduruldu. Lütfen telegram-bot.js dosyasındaki tokenı kontrol edin.");
+            return;
+        }
+        
+        // Geçici hatalarda (örn. internet kesintisi) 10 saniye bekleyip tekrar dene
+        await new Promise(r => setTimeout(r, 10000));
     }
     setTimeout(pollUpdates, 1000);
 }
 
-// En son update_id'yi alıp eski birikmiş mesajları yoksaymak için startup'ta bir kez çalıştırıyoruz
-async function initializeLastUpdateId() {
-    try {
-        const updates = await telegramRequest('getUpdates', {
-            offset: -1,
-            limit: 1
-        });
-        if (updates && updates.length > 0) {
-            lastUpdateId = updates[0].update_id;
-            console.log(`🤖 Eski birikmiş mesajlar yoksayıldı. Dinleme ID'si: ${lastUpdateId}`);
-        }
-    } catch (err) {
-        console.error("LastUpdateId ilklendirme hatası:", err.message);
-    }
-}
+// ==========================================
+// 🚀 BOT BAŞLANGICI
+// ==========================================
+console.log("==========================================");
+console.log("HERMES BULUT GITHUB AI AJANI");
+console.log("==========================================");
 
-async function startBot() {
-    console.log("==========================================");
-    console.log("🚀 HERMES BULUT GITHUB AI AJANI BOTU AKTİF");
-    console.log("==========================================");
-    console.log("🤖 Telegram Bot Polling Başlatılıyor...");
-    console.log(`🔒 Güvenlik Koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
-
-    // 📡 Render.com Port Tarama Uyum Kodu (Dummy HTTP Server)
-    // Render Web Servisleri bir port dinlenmesini zorunlu kılar.
-    const PORT = process.env.PORT || 10000;
-    require('http').createServer((req, res) => {
-        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Hermes Bot Aktif ve Çalışıyor!\n');
-    }).listen(PORT, () => {
-        console.log(`📡 Render için Port Dinleniyor: ${PORT}`);
-    });
-
-    await initializeLastUpdateId();
+if (!BOT_TOKEN || !ALLOWED_CHAT_ID || !GITHUB_TOKEN) {
+    console.error("Bot başlatılmadı: BOT_TOKEN, ALLOWED_CHAT_ID veya GITHUB_TOKEN boş.");
+    console.error("Güvenlik için gizli anahtarları doğrudan dosyaya yazmayın.");
+} else {
+    console.log("Telegram Bot Polling başladı.");
+    console.log(`Güvenlik koruması: Sadece Chat ID '${ALLOWED_CHAT_ID}' kabul ediliyor.`);
     pollUpdates();
-    console.log("🤖 Telegram Bot Polling Başladı...");
 }
-
-startBot();
