@@ -903,7 +903,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 }
 
 .budget-input-group .btn {
-    padding: 14px 22px; /* Daha dolgun padding */
+    padding: 16px 22px; /* Input ile dikey uyumu sağlamak için padding ayarlandı */
     font-size: 1rem; /* Daha belirgin font */
     white-space: nowrap;
     border-radius: 12px;
