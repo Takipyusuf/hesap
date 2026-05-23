@@ -12,7 +12,7 @@
     --primary: #3b82f6;
     --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
     --primary-dim: rgba(59, 130, 246, 0.1); /* Açık tema için daha hafif dim */
-    --success: #10b981;
+    --success: #00D16C; /* Slightly more vibrant green */
     --success-dim: rgba(16, 185, 129, 0.1);
     --warning: #f59e0b;
     --warning-dim: rgba(245, 158, 11, 0.1);
