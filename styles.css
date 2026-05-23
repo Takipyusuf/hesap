@@ -641,6 +641,105 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 /* ==========================================
    YÖNETİCİ (ADMIN) ÖZEL STİLLERİ
    ========================================== */
+.section-title i,
+.section-subtitle i {
+    color: var(--admin);
+}
+
+.user-list {
+    max-height: 70vh;
+    overflow-y: auto;
+    /* Scrollbar stili */
+    scrollbar-width: thin;
+    scrollbar-color: var(--admin) var(--border);
+}
+.user-list::-webkit-scrollbar {
+    width: 8px;
+}
+.user-list::-webkit-scrollbar-track {
+    background: var(--border);
+    border-radius: 4px;
+}
+.user-list::-webkit-scrollbar-thumb {
+    background: var(--admin);
+    border-radius: 4px;
+}
+.user-list::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-dim);
+}
+
+.user-item {
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+    word-break: break-word;
+}
+.user-item:hover { 
+    background: var(--bg-elevated); 
+    transform: translateX(2px);
+    border-color: var(--admin-dim);
+}
+.user-item.active { 
+    background: var(--admin-dim); 
+    border-color: var(--admin);   
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.15); 
+    transform: translateX(0); 
+}
+.user-item .email { 
+    font-size: 0.75rem; 
+    color: var(--text-muted); 
+    opacity: 0.8;
+}
+.user-item strong {
+    color: var(--text);
+}
+
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--admin) var(--border);
+}
+.activity-feed::-webkit-scrollbar {
+    width: 8px;
+}
+.activity-feed::-webkit-scrollbar-track {
+    background: var(--border);
+    border-radius: 4px;
+}
+.activity-feed::-webkit-scrollbar-thumb {
+    background: var(--admin);
+    border-radius: 4px;
+}
+.activity-feed::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-dim);
+}
+
+.activity-row {
+    padding: 12px 0; 
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-row .action { 
+    color: var(--admin); 
+    font-weight: 600; 
+}
+.activity-row .time { 
+    color: var(--text-muted); 
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+.activity-row > div:first-child {
+    font-weight: 500;
+    color: var(--text);
+}
 .admin-layout { max-width: 1400px; }
 .admin-grid {
     display: grid;
