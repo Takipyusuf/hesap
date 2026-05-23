@@ -64,6 +64,18 @@ async function registerUser(e) {
 
     if (!errEl) return;
     errEl.style.display = 'none';
+    errEl.textContent = ''; // Önceki hataları temizle
+
+    if (!name) {
+        errEl.textContent = 'Lütfen adınızı girin.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!email || !email.includes('@') || !email.includes('.')) {
+        errEl.textContent = 'Lütfen geçerli bir e-posta adresi girin.';
+        errEl.style.display = 'block';
+        return;
+    }
 
     // Güvenlik: Admin e-postası ile normal kullanıcı kaydı yapılamaz
     if (email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
@@ -114,6 +126,13 @@ async function loginUser(e) {
     
     if (!errEl) return;
     errEl.style.display = 'none';
+    errEl.textContent = ''; // Önceki hataları temizle
+
+    if (!email || !password) {
+        errEl.textContent = 'Lütfen e-posta ve şifrenizi girin.';
+        errEl.style.display = 'block';
+        return;
+    }
 
     // Güvenlik: Admin bu ekrandan giriş yapmaya zorlanırsa engelle veya uyar
     if (email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
@@ -165,11 +184,24 @@ function firebaseAuthError(err) {
 
 async function addDebt(type, form) {
     const fd = new FormData(form);
-    const bankName = fd.get('bankName');
+    const bankName = fd.get('bankName')?.trim();
     const paymentDay = fd.get('paymentDay') ? parseInt(fd.get('paymentDay'), 10) : null;
     const installmentAmount = parseFloat(fd.get('installmentAmount'));
     const interestRate = parseFloat(fd.get('interestRate')) || 0;
 
+    if (!bankName) {
+        alert('Banka/Kurum adı boş bırakılamaz.');
+        return;
+    }
+    if (isNaN(installmentAmount) || installmentAmount <= 0) {
+        alert('Taksit Tutarı pozitif bir sayı olmalı.');
+        return;
+    }
+    if (isNaN(interestRate) || interestRate < 0) {
+        alert('Faiz Oranı negatif olamaz.');
+        return;
+    }
+    
     let totalAmount = 0;
     let remainingAmount = 0;
     let totalInstallments = null;
@@ -178,13 +210,31 @@ async function addDebt(type, form) {
     if (type === 'kredi') {
         totalInstallments = parseInt(fd.get('totalInstallments'), 10);
         const paidInstallments = parseInt(fd.get('paidInstallments') || 0, 10);
+
+        if (isNaN(totalInstallments) || totalInstallments <= 0) {
+            alert('Toplam Taksit Sayısı pozitif bir sayı olmalı.');
+            return;
+        }
+        if (isNaN(paidInstallments) || paidInstallments < 0 || paidInstallments > totalInstallments) {
+            alert('Ödenen Taksit Sayısı geçerli bir sayı olmalı (0 ile Toplam Taksit arasında).');
+            return;
+        }
         
         totalAmount = installmentAmount * totalInstallments;
         remainingAmount = installmentAmount * Math.max(0, totalInstallments - paidInstallments);
         paidSoFar = installmentAmount * paidInstallments;
-    } else {
+    } else { // diger
         totalAmount = parseFloat(fd.get('totalAmount'));
         remainingAmount = parseFloat(fd.get('remainingAmount'));
+        
+        if (isNaN(totalAmount) || totalAmount <= 0) {
+            alert('Toplam Borç Miktarı pozitif bir sayı olmalı.');
+            return;
+        }
+        if (isNaN(remainingAmount) || remainingAmount < 0 || remainingAmount > totalAmount) {
+            alert('Kalan Tutar geçerli bir sayı olmalı (0 ile Toplam Borç arasında).');
+            return;
+        }
         paidSoFar = totalAmount - remainingAmount;
     }
 
@@ -242,7 +292,15 @@ async function confirmPayment() {
 
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const dateStr = document.getElementById('payment-date').value;
-    if (!amount || amount <= 0) return alert('Geçerli bir tutar girin.');
+
+    if (!amount || isNaN(amount) || amount <= 0) {
+        alert('Geçerli bir ödeme tutarı girin.');
+        return;
+    }
+    if (amount > debt.remainingAmount + 0.01) { // Küçük bir esneklik ile kalan borçtan fazla ödeme kontrolü
+        alert('Ödenecek tutar kalan borçtan fazla olamaz.');
+        return;
+    }
 
     const payAmount = Math.min(amount, debt.remainingAmount);
     const newRemaining = Math.max(0, debt.remainingAmount - payAmount);
@@ -287,11 +345,87 @@ async function deleteDebt(id) {
     await loadUserData();
 }
 
+function escapeCsv(value) {
+    if (value === null || value === undefined) return '';
+    const s = String(value);
+    // Virgül, çift tırnak veya yeni satır içeriyorsa çift tırnak içine al ve mevcut çift tırnakları kaçır
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+}
+
+async function downloadCSV() {
+    if (!currentUser || !userProfile || (debts.length === 0 && payments.length === 0)) {
+        alert('İndirilecek veri bulunamadı veya kullanıcı oturum açmamış.');
+        return;
+    }
+
+    let csvContent = '';
+
+    // Borçlar (Debts)
+    if (debts.length > 0) {
+        csvContent += 'BORÇLAR\n';
+        csvContent += ['Banka/Kurum', 'Tip', 'Ödeme Günü', 'Toplam Tutar', 'Kalan Tutar', 'Ödenen Tutar', 'Taksit Tutarı', 'Faiz Oranı', 'Toplam Taksit', 'Oluşturulma Tarihi'].map(escapeCsv).join(',') + '\n';
+        debts.forEach(d => {
+            const row = [
+                d.bankName,
+                d.type,
+                d.paymentDay,
+                d.totalAmount,
+                d.remainingAmount,
+                d.paidSoFar,
+                d.installmentAmount,
+                d.interestRate,
+                d.totalInstallments,
+                d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('tr-TR') : ''
+            ];
+            csvContent += row.map(escapeCsv).join(',') + '\n';
+        });
+        csvContent += '\n'; // ayırıcı
+    }
+
+    // Ödemeler (Payments)
+    if (payments.length > 0) {
+        csvContent += 'ÖDEMELER\n';
+        csvContent += ['Banka/Kurum', 'Tip', 'Miktar', 'Tarih', 'Oluşturulma Tarihi'].map(escapeCsv).join(',') + '\n';
+        payments.forEach(p => {
+            const row = [
+                p.bankName,
+                p.type,
+                p.amount,
+                p.date,
+                p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString('tr-TR') : ''
+            ];
+            csvContent += row.map(escapeCsv).join(',') + '\n';
+        });
+    }
+
+    const filename = `borc_takip_verileri_${userProfile.displayName || currentUser.email.split('@')[0]}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // özellik algılama
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } else {
+        alert('CSV indirme tarayıcınız tarafından desteklenmiyor. Lütfen farklı bir tarayıcı deneyin.');
+    }
+
+    if (typeof logActivity === 'function') {
+        await logActivity(currentUser.uid, userProfile.displayName, 'data_export', 'CSV indirme');
+    }
+}
+
 function renderProgress(debt) {
     const paid = debt.totalAmount - debt.remainingAmount;
     const pct = debt.totalAmount > 0 ? Math.min(100, (paid / debt.totalAmount) * 100) : 0;
-    return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-            <span style="font-size:0.75rem;color:var(--text-muted);">${pct.toFixed(0)}%</span>`;
+    return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>\n            <span style="font-size:0.75rem;color:var(--text-muted);">` + pct.toFixed(0) + `%</span>`;
 }
 
 function findClosestDebtId() {
