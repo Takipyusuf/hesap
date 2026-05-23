@@ -211,6 +211,108 @@ async function commitFileToGithub(fileName, newContent, sha, commitMessage) {
 // 🧠 GEMINI AI BAĞLANTI MOTORU
 // ==========================================
 
+function normalizeLineEndings(text) {
+    return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
+function escapeRegExp(text) {
+    return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceEditBlock(fileContent, searchContent, replaceContent) {
+    if (fileContent.includes(searchContent)) {
+        return {
+            ok: true,
+            content: fileContent.replace(searchContent, replaceContent),
+            strategy: 'exact'
+        };
+    }
+
+    const normalizedFile = normalizeLineEndings(fileContent);
+    const normalizedSearch = normalizeLineEndings(searchContent);
+    const normalizedReplace = normalizeLineEndings(replaceContent);
+
+    if (normalizedFile.includes(normalizedSearch)) {
+        return {
+            ok: true,
+            content: normalizedFile.replace(normalizedSearch, normalizedReplace),
+            strategy: 'line-ending'
+        };
+    }
+
+    const trimmedSearch = normalizedSearch.trim();
+    const trimmedReplace = normalizedReplace.trim();
+
+    if (trimmedSearch && normalizedFile.includes(trimmedSearch)) {
+        return {
+            ok: true,
+            content: normalizedFile.replace(trimmedSearch, trimmedReplace),
+            strategy: 'trimmed'
+        };
+    }
+
+    if (trimmedSearch) {
+        const flexiblePattern = escapeRegExp(trimmedSearch).replace(/\s+/g, '\\s+');
+        const flexibleRegex = new RegExp(flexiblePattern);
+        if (flexibleRegex.test(normalizedFile)) {
+            return {
+                ok: true,
+                content: normalizedFile.replace(flexibleRegex, trimmedReplace),
+                strategy: 'flexible-space'
+            };
+        }
+    }
+
+    return {
+        ok: false,
+        content: fileContent,
+        strategy: 'not-found'
+    };
+}
+
+function inferFilesFromMessage(text) {
+    const lowerText = text.toLowerCase();
+    const allFiles = ['index.html', 'admin.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin-app.js', 'firebase-config.js'];
+    const files = new Set(allFiles.filter(fileName => lowerText.includes(fileName.toLowerCase())));
+
+    const addUserApp = () => {
+        files.add('index.html');
+        files.add('user-app.js');
+    };
+
+    const addAdminApp = () => {
+        files.add('admin.html');
+        files.add('admin-app.js');
+    };
+
+    if (/(tasar|renk|css|stil|buton|görün|gorun|tema|mobil|responsive|font|kart|arka plan|ekran)/i.test(lowerText)) {
+        files.add('styles.css');
+    }
+
+    if (/(giriş|giris|kayıt|kayit|şifre|sifre|borç|borc|ödeme|odeme|taksit|maaş|maas|bütçe|butce|kredi|banka|hesabım|hesabim|kullanıcı|kullanici)/i.test(lowerText)) {
+        addUserApp();
+    }
+
+    if (/(yönetici|yonetici|admin|kullanıcı listesi|kullanici listesi|aktivite|panel)/i.test(lowerText)) {
+        addAdminApp();
+    }
+
+    if (/(firebase|api|gemini|antigravity|yapay zeka|ai|config|ayar|anahtar)/i.test(lowerText)) {
+        files.add('app-core.js');
+        files.add('firebase-config.js');
+    }
+
+    if (/(telegram|bot|github|commit|push|depo)/i.test(lowerText)) {
+        files.add('telegram-bot.js');
+    }
+
+    if (files.size === 0) {
+        ['index.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin.html', 'admin-app.js'].forEach(fileName => files.add(fileName));
+    }
+
+    return Array.from(files);
+}
+
 function askGemini(promptText, systemInstruction = SYSTEM_PROMPT) {
     return new Promise((resolve, reject) => {
         const apiKey = getGeminiApiKey();
@@ -301,8 +403,8 @@ async function handleMessage(message) {
             await sendMessage(chatId, `🧠 *Hermes doğrudan GitHub deponuzu inceliyor...*`);
 
             // Hangi dosyaların isminin geçtiğini kontrol et
-            const allFiles = ['index.html', 'admin.html', 'styles.css', 'app-core.js', 'user-app.js', 'admin-app.js', 'firebase-config.js'];
-            let filesToLoad = allFiles.filter(f => text.toLowerCase().includes(f.toLowerCase()));
+            const filesToLoad = inferFilesFromMessage(text);
+            await sendMessage(chatId, `🔎 *İlgili dosyaları ben seçtim:* ${filesToLoad.map(fileName => `\`${fileName}\``).join(', ')}`);
             
             // Eğer dosya belirtilmemişse akıllı tahmin yap
             if (filesToLoad.length === 0) {
@@ -361,13 +463,13 @@ async function handleMessage(message) {
                     const meta = loadedFilesMeta[fileName];
                     if (!meta) continue;
 
-                    let fileContent = meta.content;
-                    if (!fileContent.includes(searchContent)) {
+                    const editResult = replaceEditBlock(meta.content, searchContent, replaceContent);
+                    if (!editResult.ok) {
                         await sendMessage(chatId, `❌ *Hata:* ${fileName} dosyasındaki kod bloğu tam eşleşmediği için güncelleme uygulanamadı.`);
                         continue;
                     }
 
-                    const newContent = fileContent.replace(searchContent, replaceContent);
+                    const newContent = editResult.content;
                     const commitMsg = `Hermes AI: ${text.slice(0, 50)}...`;
 
                     await sendMessage(chatId, `📤 *${fileName}* doğrudan GitHub'a pushlanıyor...`);
