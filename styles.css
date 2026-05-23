@@ -902,7 +902,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 
 .budget-input-group .btn {
     padding: 14px 22px; /* Daha dolgun padding */
-    font-size: 0.95rem; /* Daha belirgin font */
+    font-size: 1rem; /* Daha belirgin font */
     white-space: nowrap;
     border-radius: 12px;
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
