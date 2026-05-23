@@ -812,7 +812,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
     display: none;
     width: 360px;
     height: 480px;
-    background: #151f32;
+    background: var(--card); /* AI penceresi ana kart rengiyle tutarlı hale getirildi */
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -827,7 +827,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 }
 
 #ai-chat-header {
-    background: var(--bg-elevated);
+    background: var(--card); /* AI penceresi başlığı ana kart rengiyle tutarlı hale getirildi */
     border-bottom: 1px solid var(--border);
     color: var(--text);
     padding: 16px;
@@ -842,7 +842,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
     flex: 1;
     padding: 16px;
     overflow-y: auto;
-    background: rgba(11, 15, 25, 0.4);
+    background: var(--bg); /* AI penceresi gövdesi ana arka plan rengiyle tutarlı hale getirildi */
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -864,8 +864,8 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
     border-bottom-right-radius: 4px;
 }
 
-.ai-msg.bot { 
-    background: var(--card); 
+.ai-msg.bot {
+    background: var(--bg-elevated); /* Bot mesajları için yükseltilmiş arka plan rengi kullanıldı */
     border: 1px solid var(--border);
     align-self: flex-start; 
     color: var(--text); 
@@ -875,7 +875,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 #ai-chat-footer {
     padding: 12px;
     border-top: 1px solid var(--border);
-    background: var(--bg-elevated);
+    background: var(--card); /* AI penceresi altbilgisi ana kart rengiyle tutarlı hale getirildi */
     display: flex;
     gap: 8px;
     align-items: center;
