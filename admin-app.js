@@ -159,7 +159,7 @@ async function selectUser(uid) {
             .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
             .slice(0, 30);
 
-        const tbody = document.getElementById('detail-debts');
+        const tbody = document.getElementById('detail-debts-body');
         if (tbody) {
             tbody.innerHTML = '';
             debts.forEach(d => {
@@ -174,7 +174,7 @@ async function selectUser(uid) {
             });
         }
 
-        const ptbody = document.getElementById('detail-payments');
+        const ptbody = document.getElementById('detail-payments-body');
         if (ptbody) {
             ptbody.innerHTML = '';
             payments.slice(0, 20).forEach(p => {
@@ -194,7 +194,7 @@ async function selectUser(uid) {
                 const div = document.createElement('div');
                 div.className = 'activity-row';
                 div.innerHTML = `
-                    <div class="action">${actionLabel(a.action)}</div>
+                    <div><strong>${escapeHtml(a.userName || 'Kullanıcı')}</strong> — <span class="action">${actionLabel(a.action)}</span></div>
                     <div>${escapeHtml(a.detail || '')}</div>
                     <div class="time">${formatDateTime(a.createdAt)}</div>`;
                 actList.appendChild(div);
